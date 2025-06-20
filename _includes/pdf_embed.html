@@ -1,0 +1,66 @@
+<div class="pdf-container" id="pdf-container-{{ include.id }}">
+    <button class="pdf-toggle-btn" onclick="togglePdfViewer('{{ include.id }}')">
+      Show PDF Viewer
+    </button>
+    <div class="pdf-viewer-wrapper" id="pdf-viewer-{{ include.id }}" style="display: none;">
+      <iframe 
+        src="{{ include.file }}#view=fitH" 
+        class="pdf-viewer"
+        id="pdf-iframe-{{ include.id }}"
+        frameborder="0"
+        scrolling="yes"
+      ></iframe>
+    </div>
+  </div>
+  
+  <script>
+  function togglePdfViewer(id) {
+    const wrapper = document.getElementById(`pdf-viewer-${id}`);
+    const button = document.querySelector(`#pdf-container-${id} .pdf-toggle-btn`);
+    
+    if (wrapper.style.display === 'none') {
+      wrapper.style.display = 'block';
+      button.textContent = 'Hide PDF';
+      // Resize iframe to ensure proper display
+      const iframe = document.getElementById(`pdf-iframe-${id}`);
+      iframe.style.height = '600px'; // Adjust height as needed
+    } else {
+      wrapper.style.display = 'none';
+      button.textContent = 'Show PDF';
+    }
+  }
+  </script>
+  
+  <style>
+  .pdf-container {
+    margin: 20px 0;
+  }
+  
+  .pdf-toggle-btn {
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .pdf-toggle-btn:hover {
+    background-color: #3367d6;
+  }
+  
+  .pdf-viewer-wrapper {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .pdf-viewer {
+    width: 100%;
+    height: 600px; /* Default height, will be adjusted by JS */
+  }
+  </style>
+  
