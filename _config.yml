@@ -1,1 +1,19 @@
-TODO
+# _config.yml
+
+# 1. 使用更宽松的 Markdown 解析器（如 CommonMark 或 kramdown）
+markdown: CommonMark # 或 kramdown
+
+# 2. 允许 HTML 标签不被转义（关键！）
+commonmark:
+  options:
+    - unsafe
+    - footnotes
+
+# 3. 确保 attachments 文件夹不被忽略
+include:
+  - "doc/*/attachments/**"
+
+# 4. 禁用默认的 Jekyll 相对路径转换（避免路径问题）
+relative_links:
+  enabled: false
+
