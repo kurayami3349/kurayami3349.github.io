@@ -11,7 +11,7 @@ commonmark:
 
 # 3. 确保 attachments 文件夹不被忽略
 include:
-  - "doc/*/attachments/**"
+  - "doc/note1/attachments/**/*"
 
 # 4. 禁用默认的 Jekyll 相对路径转换（避免路径问题）
 relative_links:
