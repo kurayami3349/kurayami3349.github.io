@@ -1,5 +1,5 @@
 # _config.yml
-
+theme: jekyll-theme-minimal
 # 1. 使用更宽松的 Markdown 解析器（如 CommonMark 或 kramdown）
 markdown: CommonMark # 或 kramdown
 
