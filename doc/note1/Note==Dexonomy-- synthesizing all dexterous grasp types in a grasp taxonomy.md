@@ -38,7 +38,7 @@ project website: (<https://pku-epic.github.io/Dexonomy/>)
 
 #### **模型架构**
 
-![\<img alt="" data-attachment-key="VZRTYBYT" width="1425" height="597" src="attachments/VZRTYBYT.png" ztype="zimage"> | 1425](attachments/VZRTYBYT.png)
+![1](attachments/VZRTYBYT.png)
 
 *   **双阶段流水线**：\
     (1) **全局对齐**：在GPU上并行优化物体位姿（缩放/旋转/平移）以匹配模板接触点\[Eq.7]；\
