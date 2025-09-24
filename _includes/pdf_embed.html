@@ -1,66 +1,171 @@
 <div class="pdf-container" id="pdf-container-{{ include.id }}">
-    <button class="pdf-toggle-btn" onclick="togglePdfViewer('{{ include.id }}')">
-      Show PDF Viewer
-    </button>
-    <div class="pdf-viewer-wrapper" id="pdf-viewer-{{ include.id }}" style="display: none;">
-      <iframe 
-        src="{{ include.file }}#view=fitH" 
-        class="pdf-viewer"
-        id="pdf-iframe-{{ include.id }}"
-        frameborder="0"
-        scrolling="yes"
-      ></iframe>
-    </div>
+  <button class="pdf-toggle-btn" onclick="togglePdfViewer('{{ include.id }}')">
+    <span class="toggle-icon">📄</span>
+    <span class="toggle-text">查看PDF</span>
+  </button>
+  <div class="pdf-viewer-wrapper" id="pdf-viewer-{{ include.id }}">
+    <div class="pdf-resizer"></div>
+    <iframe 
+      src="{{ include.file }}#view=fitH" 
+      class="pdf-viewer"
+      id="pdf-iframe-{{ include.id }}"
+      frameborder="0"
+      scrolling="yes"
+    ></iframe>
   </div>
+</div>
+
+<script>
+function togglePdfViewer(id) {
+  const container = document.getElementById(`pdf-container-${id}`);
+  const wrapper = document.getElementById(`pdf-viewer-${id}`);
+  const button = document.querySelector(`#pdf-container-${id} .pdf-toggle-btn`);
+  const buttonText = button.querySelector('.toggle-text');
   
-  <script>
-  function togglePdfViewer(id) {
-    const wrapper = document.getElementById(`pdf-viewer-${id}`);
-    const button = document.querySelector(`#pdf-container-${id} .pdf-toggle-btn`);
-    
-    if (wrapper.style.display === 'none') {
-      wrapper.style.display = 'block';
-      button.textContent = 'Hide PDF';
-      // Resize iframe to ensure proper display
-      const iframe = document.getElementById(`pdf-iframe-${id}`);
-      iframe.style.height = '600px'; // Adjust height as needed
-    } else {
-      wrapper.style.display = 'none';
-      button.textContent = 'Show PDF';
-    }
+  if (!container.classList.contains('pdf-open')) {
+    container.classList.add('pdf-open');
+    buttonText.textContent = '关闭PDF';
+    document.body.style.marginRight = '40%';
+  } else {
+    container.classList.remove('pdf-open');
+    buttonText.textContent = '查看PDF';
+    document.body.style.marginRight = '0';
   }
-  </script>
-  
-  <style>
-  .pdf-container {
-    margin: 20px 0;
+}
+
+// 在页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+  // 将所有PDF容器移动到body的直接子元素
+  document.querySelectorAll('.pdf-container').forEach(container => {
+    if (container.parentElement !== document.body) {
+      document.body.appendChild(container);
+    }
+    
+    // 初始化拖动调整大小功能
+    const resizer = container.querySelector('.pdf-resizer');
+    let isResizing = false;
+    let startX;
+    let startWidth;
+    
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.pageX;
+      startWidth = parseInt(container.style.width || '40');
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', () => {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+      });
+    });
+    
+    function handleMouseMove(e) {
+      if (!isResizing) return;
+      
+      const width = Math.min(Math.max(20, startWidth + (startX - e.pageX) / window.innerWidth * 100), 80);
+      container.style.width = `${width}%`;
+      document.body.style.marginRight = container.classList.contains('pdf-open') ? `${width}%` : '0';
+    }
+  });
+});
+</script>
+
+<style>
+.pdf-container {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.pdf-container.pdf-open {
+  right: 0;
+  width: 40%;
+  height: 100vh;
+  top: 0;
+  transform: none;
+}
+
+.pdf-toggle-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) translateX(-100%);
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 4px 0 0 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+}
+
+.pdf-toggle-btn:hover {
+  background-color: #3367d6;
+}
+
+.toggle-icon {
+  font-size: 20px;
+}
+
+.pdf-viewer-wrapper {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.pdf-resizer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.pdf-resizer:hover {
+  background-color: #4285f4;
+}
+
+.pdf-container.pdf-open .pdf-viewer-wrapper {
+  display: block;
+}
+
+.pdf-viewer {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* 暗色主题适配 */
+@media (prefers-color-scheme: dark) {
+  .pdf-viewer-wrapper {
+    background: #2d2d2d;
   }
   
   .pdf-toggle-btn {
-    background-color: #4285f4;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-bottom: 10px;
+    background-color: #666;
   }
   
   .pdf-toggle-btn:hover {
-    background-color: #3367d6;
+    background-color: #888;
   }
   
-  .pdf-viewer-wrapper {
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
+  .pdf-resizer:hover {
+    background-color: #888;
   }
-  
-  .pdf-viewer {
-    width: 100%;
-    height: 600px; /* Default height, will be adjusted by JS */
-  }
-  </style>
+}
+</style>
   

@@ -1,0 +1,315 @@
+<!-- 论文笔记样式 -->
+<style>
+.paper-note-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* 确保Markdown内容被正确渲染 */
+.paper-note-container[markdown="1"] {
+  display: block;
+}
+
+.paper-note-container h1 {
+  font-size: 2.2em;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #4285f4;
+  color: #2c3e50;
+}
+
+.paper-note-container h2 {
+  font-size: 1.8em;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #34495e;
+  position: relative;
+  padding-left: 1rem;
+}
+
+.paper-note-container h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.2em;
+  height: 0.8em;
+  width: 4px;
+  background: #4285f4;
+  border-radius: 2px;
+}
+
+.paper-note-container h3 {
+  font-size: 1.4em;
+  margin-top: 1.5rem;
+  color: #455a64;
+}
+
+.paper-note-container p {
+  margin: 1rem 0;
+  color: #37474f;
+  text-align: justify;
+}
+
+.paper-note-container blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid #4285f4;
+  background-color: #f8f9fa;
+  color: #455a64;
+  border-radius: 0 4px 4px 0;
+}
+
+.paper-note-container table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.paper-note-container th,
+.paper-note-container td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e9ecef;
+  text-align: left;
+}
+
+.paper-note-container th {
+  background-color: #4285f4;
+  color: white;
+  font-weight: 600;
+}
+
+.paper-note-container tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.paper-note-container img {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.paper-note-container figure {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.paper-note-container figcaption {
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.paper-note-container code {
+  background-color: #f8f9fa;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: Consolas, Monaco, 'Andale Mono', monospace;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+
+.paper-note-container pre {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  border: 1px solid #e9ecef;
+}
+
+.paper-note-container pre code {
+  padding: 0;
+  color: inherit;
+}
+
+.paper-note-container ul,
+.paper-note-container ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.paper-note-container li {
+  margin: 0.5rem 0;
+  color: #37474f;
+}
+
+.paper-note-container hr {
+  margin: 2rem 0;
+  border: none;
+  border-top: 2px solid #e9ecef;
+}
+
+/* Meta Data 样式 */
+.meta-data {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 4px;
+  margin: 2rem 0;
+  border: 1px solid #e9ecef;
+}
+
+.meta-data[markdown="1"] {
+  display: block;
+}
+
+.meta-data h3 {
+  margin-top: 0 !important;
+  color: #2c3e50;
+}
+
+.meta-data ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.meta-data li {
+  margin: 0.8rem 0;
+}
+
+/* 目录样式 */
+.paper-toc {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  position: sticky;
+  top: 2rem;
+}
+
+.paper-toc-title {
+  font-size: 1.2em;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.paper-toc ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.paper-toc li {
+  margin: 0.3rem 0;
+}
+
+.paper-toc a {
+  color: #4285f4;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.paper-toc a:hover {
+  color: #2c3e50;
+}
+
+.paper-toc ul ul {
+  padding-left: 1.5rem;
+}
+
+/* 暗色主题 */
+@media (prefers-color-scheme: dark) {
+  .paper-note-container {
+    color: #e0e0e0;
+  }
+
+  .paper-note-container h1,
+  .paper-note-container h2,
+  .paper-note-container h3 {
+    color: #fff;
+  }
+
+  .paper-note-container p,
+  .paper-note-container li {
+    color: #e0e0e0;
+  }
+
+  .paper-note-container blockquote,
+  .meta-data,
+  .paper-toc {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .paper-note-container code {
+    background-color: #2d2d2d;
+    color: #ff79c6;
+  }
+
+  .paper-note-container pre {
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+
+  .paper-note-container table th {
+    background-color: #2d2d2d;
+    color: #fff;
+  }
+
+  .paper-note-container table td {
+    border-color: #444;
+  }
+
+  .paper-note-container table tr:nth-child(even) {
+    background-color: #2d2d2d;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 为文章添加目录
+  const container = document.querySelector('.paper-note-container');
+  if (!container) return;
+
+  const headings = container.querySelectorAll('h2, h3');
+  if (headings.length === 0) return;
+
+  const toc = document.createElement('div');
+  toc.className = 'paper-toc';
+  
+  const tocTitle = document.createElement('div');
+  tocTitle.className = 'paper-toc-title';
+  tocTitle.textContent = '目录';
+  toc.appendChild(tocTitle);
+
+  const tocList = document.createElement('ul');
+  let currentLevel2List = null;
+
+  headings.forEach((heading, index) => {
+    const link = document.createElement('a');
+    const id = `heading-${index}`;
+    heading.id = id;
+    link.href = `#${id}`;
+    link.textContent = heading.textContent;
+
+    const listItem = document.createElement('li');
+    listItem.appendChild(link);
+
+    if (heading.tagName === 'H2') {
+      currentLevel2List = null;
+      tocList.appendChild(listItem);
+    } else if (heading.tagName === 'H3') {
+      if (!currentLevel2List) {
+        currentLevel2List = document.createElement('ul');
+        tocList.lastElementChild.appendChild(currentLevel2List);
+      }
+      currentLevel2List.appendChild(listItem);
+    }
+  });
+
+  toc.appendChild(tocList);
+  container.insertBefore(toc, container.firstChild);
+});
+</script>
