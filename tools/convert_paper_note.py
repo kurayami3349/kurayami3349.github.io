@@ -37,7 +37,7 @@ def process_content(content):
     # 添加PDF嵌入提示（作为注释）
     pdf_comment = """<!--
 要嵌入PDF，请在Meta Data部分后添加以下代码：
-{% include pdf_embed.html url="/path/to/your/paper.pdf" %}
+{% include pdf_embed.html file="path/to/your/paper.pdf" id="unique-id" %}
 -->
 """
     
