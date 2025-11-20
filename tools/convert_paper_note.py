@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT 
+# Copyright (c) 2025 qq7r. All rights reserved.
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """

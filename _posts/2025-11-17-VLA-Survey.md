@@ -29,7 +29,7 @@ table
 | ACT           | overview of ACT:RSS 2023                      | key novel features of ACT           | [ACT](https://tonyzhaozh.github.io/aloha/)                 |
 | octo          | overview of octo:[conference] [year]          | key novel features of octo          | [octo](https://cliport.github.io/octo/)                    |
 | OpenVLA       | overview of OpenVLA:[conference] [year]       | key novel features of OpenVLA       | [OpenVLA](https://openvla.github.io/)                      |
-| GR-2          | overview of GR-2:[conference] [year]          | key novel features of GR-2          | [GR-2](https://gr2-manipulation.github.io/)                |
+| GR-2          | overview of GR-2: Tech Report 2025 See [GR-2 note]({% post_url 2025-11-20-gr-2 %})  | key novel features of GR-2          | [GR-2](https://gr2-manipulation.github.io/)                |
 | GR00T N1      | overview of Groot N1:[conference] [year]  See [gt00t note]({% post_url 2025-11-18-gr00t %})    | key novel features of Groot N1      | [GRooT N1](https://github.com/NVIDIA/Isaac-GR00T)          |
 | Pi-0          | overview of Pi-0:[conference] [year]          | key novel features of Pi-0          | [Pi-0](https://www.physicalintelligence.company/blog/pi0)  |
 | CoT-VLA       | overview of CoT-VLA:CVPR 2025                 | key novel features of CoT-VLA       | [CoT-VLA](https://cot-vla.github.io/)                      |
