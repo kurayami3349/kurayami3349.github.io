@@ -28,7 +28,7 @@ table
 | PaLM-E        | overview of PaLM-E:[conference] [year]        | key novel features of PaLM-E        | [PaLM-E](https://github.com/kyegomez/PALM-E)               |
 | ACT           | overview of ACT:RSS 2023                      | key novel features of ACT           | [ACT](https://tonyzhaozh.github.io/aloha/)                 |
 | octo          | overview of octo:[conference] [year]          | key novel features of octo          | [octo](https://cliport.github.io/octo/)                    |
-| OpenVLA       | overview of OpenVLA:[conference] [year]       | key novel features of OpenVLA       | [OpenVLA](https://openvla.github.io/)                      |
+| OpenVLA       | overview of OpenVLA:CoRL 2024 See [OpenVLA note]({% post_url 2025-11-20-openvla %})      | key novel features of OpenVLA       | [OpenVLA](https://openvla.github.io/)                      |
 | GR-2          | overview of GR-2: Tech Report 2025 See [GR-2 note]({% post_url 2025-11-20-gr-2 %})  | key novel features of GR-2          | [GR-2](https://gr2-manipulation.github.io/)                |
 | GR00T N1      | overview of Groot N1:[conference] [year]  See [gt00t note]({% post_url 2025-11-18-gr00t %})    | key novel features of Groot N1      | [GRooT N1](https://github.com/NVIDIA/Isaac-GR00T)          |
 | Pi-0          | overview of Pi-0:[conference] [year]          | key novel features of Pi-0          | [Pi-0](https://www.physicalintelligence.company/blog/pi0)  |
@@ -37,5 +37,7 @@ table
 | RDT           | overview of RDT:[conference] [year]           | key novel features of RDT           | [RDT](https://rdt-robotics.github.io/rdt-robotics/)        |
 | LEO           | overview of LEO:ICML 2024                     | key novel features of LEO           | [LEO](https://embodied-generalist.github.io/)              |
 | DexGraspVLA   | overview of DexGraspVLA:[conference] [year]   See [DexGraspVLA note]({% post_url 2025-11-19-dexgraspvla %})         | key novel features of DexGraspVLA   | [DexGraspVLA](https://dexgraspvla.github.io/)              |
+|$π_{0.5}$ | overview of $π_{0.5}$:[conference] [year]   See [$π_{0.5}$ note]({% post_url 2025-11-24-pi05 %})         | key novel features of $π_{0.5}$   | [$π_{0.5}$](https://pi.website/blog/pi05/)              |
+|$π^{*}_{0.6}$ | overview of $π^{*}_{0.6}$:[conference] [year]   See $π^{*}_{0.6}$ note        | key novel features of $π^{*}_{0.6}$   | [$π^{*}_{0.6}$](https://pi.website/blog/pistar06/)              |
 
 </div>
