@@ -4,7 +4,7 @@
     {
       "label": "Run Jekyll Server",
       "type": "shell",
-      "command": "./tools/run.sh",
+      "command": "conda run --no-capture-output -n blob bash tools/run.sh",
       "group": {
         "kind": "build",
         "isDefault": true
@@ -15,7 +15,7 @@
     {
       "label": "Build Jekyll Site",
       "type": "shell",
-      "command": "./tools/test.sh",
+      "command": "conda run --no-capture-output -n blob bash tools/test.sh",
       "group": {
         "kind": "build"
       },

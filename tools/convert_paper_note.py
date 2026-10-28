@@ -1,341 +1,191 @@
-# SPDX-License-Identifier: MIT 
-# Copyright (c) 2025 qq7r. All rights reserved.
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Usage:
-  python tools/convert_paper_note.py path/to/input_note.md title \
-    --date YYYY-MM-DD [--output-dir output_dir] [--image-base-url /assets/img] \
-    [--images-output-dir path/to/copy/images]
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 qq7r.
+"""Convert a Markdown paper note into an unpublished Jekyll post, offline.
 
-该脚本将原始 Markdown 笔记转换为 Jekyll 博客文章格式，并可选地规范与重写图片引用。
-同时会在内容中自动提取 arXiv id，并将其作为图片管理键用于：
-- 复制图片到 `images_output_dir/arxiv-<id>/filename`
-- 将相对图片链接重写为 `image_base_url/arxiv-<id>/filename`
+Relative images must be inside the input note's directory. Existing posts are
+protected unless --force is supplied; different images never silently overwrite
+one another. Review metadata and set published: true when ready to publish.
 """
 
-import os
-import re
-from datetime import datetime
 import argparse
+from datetime import datetime
+import hashlib
+import html
+import json
+from pathlib import Path
+import re
 import shutil
+import sys
 from typing import Optional
-import urllib.request
-import urllib.error
+from urllib.parse import quote, unquote, urlsplit
 
-root_dir = os.path.dirname(os.path.dirname(__file__))
+ROOT = Path(__file__).resolve().parent.parent
 
 
 class PaperNoteConverter:
-  """将原始 Markdown 笔记转换为 Jekyll 博文的转换器。
-  功能：
-  - 生成带 front matter 的文章内容
-  - 处理并规范图片引用（Markdown 与 HTML 两种形式）
-  - 从内容中提取 arXiv id 作为图片管理键
-  - 生成目标文件
-  """
-
   def __init__(self, image_base_url: Optional[str] = "/img"):
-    """初始化转换器。
-    参数:
-      image_base_url (Optional[str]): 图片基础 URL 前缀，未提供时默认使用 "/img"。
-    """
-    # 项目根目录默认取为当前脚本上级的上级目录
-    self.root_dir = root_dir
+    self.root_dir = ROOT
     self.image_base_url = image_base_url or "/img"
 
   def create_front_matter(self, title: str, date: str) -> str:
-    """创建 Jekyll 文章的 front matter。
-    参数:
-      title (str): 文章标题。
-      date (str): 发布日期（YYYY-MM-DD）。
-    返回:
-      str: front matter 字符串。
-    """
-    return f"""---
-title: {title}
+    # A JSON string is also a valid YAML scalar (including colons and quotes).
+    quoted_title = json.dumps(title, ensure_ascii=False)
+    return f'''---
+title: {quoted_title}
 date: {date}
+published: false
 categories: [论文笔记]
-tags: [待设置]
-description: 待添加文章描述
+tags: []
+description: ""
 ---
 
 {{% include paper_note_style.html %}}
 
-<div class=\"paper-note-container\" markdown=\"1\">
-"""
+<div class="paper-note-container" markdown="1">
+'''
 
   def process_content(self, content: str) -> str:
-    """处理 Markdown 内容，添加必要的结构和提示。
-    参数:
-      content (str): 原始 Markdown 内容。
-    返回:
-      str: 处理后的内容。
-    """
-    content = content.lstrip()
-
-    pdf_comment = """<!--
-要嵌入PDF，请在Meta Data部分后添加以下代码：
-{% include pdf_embed.html file=\"path/to/your/paper.pdf\" id=\"unique-id\" %}
--->
-"""
-
-    meta_data_pos = content.find("### Meta Data")
-    meta_data_end = content.find("***", meta_data_pos) if meta_data_pos != -1 else -1
-    if meta_data_end != -1:
-      content = content[:meta_data_end] + "\n" + pdf_comment + content[meta_data_end:]
-
-    content = content.rstrip() + "\n\n</div>"
-    return content
-
-  def arxiv_abs_exists(self, arxiv_id: str, timeout: float = 5.0) -> bool:
-    """验证 arXiv abs 页面是否存在。
-    参数:
-      arxiv_id (str): 形如 '2504.18829' 或包含版本 '2504.18829v2' 的 arXiv id。
-      timeout (float): 请求超时时间（秒）。
-    返回:
-      bool: 页面是否存在。
-    """
-    url = f"https://arxiv.org/abs/{arxiv_id}"
-    req = urllib.request.Request(url, headers={"User-Agent": "PaperNoteConverter/1.0", "Accept": "text/html"})
-    try:
-      with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return 200 <= getattr(resp, "status", 200) < 400
-    except urllib.error.HTTPError as e:
-      # 404 明确不存在；其他错误视为不可用
-      return 200 <= e.code < 400
-    except Exception:
-      return False
+    return content.strip() + "\n\n</div>\n"
 
   def extract_arxiv_key(self, content: str) -> Optional[str]:
-    """从内容中提取 arXiv id，并返回用于图片管理的键。
-    支持格式示例：
-      "**ArXiv id:** arXiv:2504.18829"、"arXiv:2401.12345v2"，或 URL 形式 "https://arxiv.org/abs/2504.18829"。
-    返回示例：
-      "arxiv-2504.18829" 或 "arxiv-2401.12345v2"。
+    # Network availability must not change filenames or image URLs.
+    match = re.search(
+      r"(?i)(?:\barxiv:\s*|https?://arxiv\.org/(?:abs|pdf)/)"
+      r"([0-9]{4}\.[0-9]{4,5}(?:v\d+)?)\b", content
+    )
+    return f"arxiv-{match.group(1)}" if match else None
 
-    参数:
-      content (str): 原始 Markdown 内容。
-    返回:
-      Optional[str]: 规范化后的图片管理键，未找到则为 None。
-    """
-    # 1) 直接的 "arXiv:..." 写法，前置词边界
-    m = re.search(r"(?i)\barxiv:\s*([0-9]{4}\.[0-9]{4,5}(?:v\d+)?)", content)
-    if not m:
-      # 2) "ArXiv id: arXiv:..." 写法
-      m = re.search(r"(?i)arxiv\s*id\s*[:：]\s*arxiv:\s*([0-9]{4}\.[0-9]{4,5}(?:v\d+)?)", content)
-    if not m:
-      # 3) URL 写法
-      m = re.search(r"(?i)https?://arxiv\.org/abs/([0-9]{4}\.[0-9]{4,5}(?:v\d+)?)", content)
-    if not m:
-      return None
+  @staticmethod
+  def digest(path: Path) -> bytes:
+    return hashlib.sha256(path.read_bytes()).digest()
 
-    arxiv_id = m.group(1)
+  def process_images(self, content: str, input_dir=None, image_base_url=None,
+                     copy_to_dir=None, image_key=None) -> str:
+    source_root = Path(input_dir or ".").resolve()
+    image_root = Path(copy_to_dir).resolve() if copy_to_dir else None
+    if image_key and not re.fullmatch(r"[\w-]+(?:\.[\w-]+)*", image_key):
+      raise ValueError("图片分组键无效")
+    target_root = image_root / image_key if image_root and image_key else image_root
+    copies = {}
 
-    # 先检查完整 id（可能包含版本）
-    if self.arxiv_abs_exists(arxiv_id):
-      return f"arxiv-{arxiv_id}"
+    def rewrite_src(src):
+      parts = urlsplit(src)
+      if parts.scheme in ("http", "https", "data") or src.startswith("/"):
+        return src
+      if parts.scheme:
+        raise ValueError(f"不支持的图片协议：{parts.scheme}")
+      if not image_base_url or not target_root:
+        return src
+      source = (source_root / unquote(parts.path)).resolve()
+      if not source.is_relative_to(source_root):
+        raise ValueError(f"图片不能位于笔记目录之外：{src}")
+      if not source.is_file():
+        raise FileNotFoundError(f"找不到图片：{src}")
+      target = target_root / source.name
+      if not target.resolve().is_relative_to(image_root):
+        raise ValueError(f"图片目标不能位于输出目录之外：{target}")
+      # Flattened names may collide, even within a single note.
+      previous = copies.get(target, target if target.exists() else None)
+      if previous is not None and self.digest(previous) != self.digest(source):
+        raise FileExistsError(f"图片重名且内容不同，请先重命名：{target}")
+      copies[target] = source
+      segments = [image_base_url.rstrip("/")]
+      if image_key:
+        segments.append(image_key)
+      segments.append(quote(source.name))
+      url = "/".join(segments)
+      if parts.query:
+        url += "?" + parts.query
+      if parts.fragment:
+        url += "#" + parts.fragment
+      return url
 
-    # 若包含版本且不存在，尝试去掉版本重新检查
-    base_id = re.sub(r"v\d+$", "", arxiv_id)
-    if base_id != arxiv_id and self.arxiv_abs_exists(base_id):
-      print(f"⚠️ 未找到 arXiv 页面：{arxiv_id}，改用 {base_id}")
-      return f"arxiv-{base_id}"
+    markdown = re.compile(
+      r'!\[(?P<alt>[^\]]*)\]\((?:<(?P<angle>[^>]+)>|(?P<src>[^\s()]+))'
+      r'(?P<title>\s+(?:"[^"]*"|\x27[^\x27]*\x27))?\)'
+    )
+    image_tag = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+    source_attr = re.compile(r'''(?<![\w:-])src\s*=\s*(["'])(.*?)\1''', re.IGNORECASE)
 
-    print(f"⚠️ 未找到 arXiv 页面：{arxiv_id}，不使用图片分组键")
-    return None
+    def markdown_image(match):
+      src = rewrite_src(match.group("angle") or match.group("src"))
+      return f'![{match.group("alt")}]({src}{match.group("title") or ""})'
 
-  def process_images(
-    self,
-    content: str,
-    input_dir: Optional[str] = None,
-    image_base_url: Optional[str] = None,
-    copy_to_dir: Optional[str] = None,
-    image_key: Optional[str] = None,
-  ) -> str:
-    """处理 Markdown 与 HTML 中的图片引用。
-    行为：
-    - 识别并处理 `![alt](src)` 与 `<img src=\"src\">` 两种格式；
-    - 对相对路径图片：如提供 `image_base_url` 则重写为站点内路径（可在其后附加 `image_key` 子目录）；
-      如提供 `copy_to_dir` 则复制图片到该目录（如有 `image_key` 则复制到其子目录）并保留文件名；
-    - 对以 `http://`、`https://`、`/` 开头的绝对链接保持不变。
-    - 统一图片的 alt 文本为顺序编号：fig1, fig2, ...（按出现顺序）。
-
-    参数:
-      content (str): 原始 Markdown 内容。
-      input_dir (Optional[str]): 输入文件所在目录，用于解析相对路径图片源文件。
-      image_base_url (Optional[str]): 站点内图片基础 URL 前缀（如 `/img`），未传时会使用类默认值。
-      copy_to_dir (Optional[str]): 复制相对路径图片到该目录（可选）。
-      image_key (Optional[str]): 图片管理键（如基于 arXiv id），用于子目录。
-    返回:
-      str: 已重写图片链接的内容。
-    """
-    def is_relative(src: str) -> bool:
-      return not (src.startswith("http://") or src.startswith("https://") or src.startswith("/"))
-
-    def rewrite_src(src: str) -> str:
-      # 复制到指定目录（可选且仅处理相对路径）
-      if copy_to_dir and input_dir and is_relative(src):
-        try:
-          target_dir = copy_to_dir if not image_key else os.path.join(copy_to_dir, image_key)
-          os.makedirs(target_dir, exist_ok=True)
-          src_abs = os.path.normpath(os.path.join(input_dir, src))
-          if os.path.isfile(src_abs):
-            shutil.copy2(src_abs, os.path.join(target_dir, os.path.basename(src)))
-        except Exception:
-          # 若复制失败，不影响转换流程，仅保留原链接或重写链接
-          pass
-
-      # 重写链接到站点路径（保留文件名）
-      if image_base_url and is_relative(src):
-        base = image_base_url.rstrip('/')
-        if image_key:
-          return f"{base}/{image_key}/{os.path.basename(src)}"
-        return f"{base}/{os.path.basename(src)}"
-      return src
-
-    # 统一 alt 的顺序计数器
-    fig_counter = 1
-
-    # 处理 Markdown 图片：![alt](src)
-    pattern_md = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
-
-    def repl_md(match: re.Match) -> str:
-      nonlocal fig_counter
-      src = match.group(2)
-      new_src = rewrite_src(src)
-      alt_text = f"fig{fig_counter}"
-      fig_counter += 1
-      return f"![{alt_text}]({new_src})"
-
-    content = pattern_md.sub(repl_md, content)
-
-    # 处理 HTML 图片：<img ... src=\"...\" ...>
-    pattern_html = re.compile(r"<img([^>]*)src=\"([^\"]+)\"([^>]*)>")
-
-    def set_alt(attrs: str, alt_text: str) -> str:
-      # 替换已存在的 alt，或插入一个新的 alt
-      if re.search(r"\balt\s*=\s*\"", attrs):
-        return re.sub(r"\balt\s*=\s*\"[^\"]*\"", f"alt=\"{alt_text}\"", attrs)
-      # 插入到属性开头，保持简单可靠
-      return f" alt=\"{alt_text}\"{attrs}"
-
-    def repl_html(match: re.Match) -> str:
-      nonlocal fig_counter
-      pre = match.group(1)
-      src = match.group(2)
-      post = match.group(3)
-      new_src = rewrite_src(src)
-      alt_text = f"fig{fig_counter}"
-      fig_counter += 1
-      attrs = f"{pre}src=\"{new_src}\"{post}"
-      attrs = set_alt(attrs, alt_text)
-      return f"<img{attrs}>"
-
-    content = pattern_html.sub(repl_html, content)
-    return content
-
-  def convert_note(
-    self,
-    input_file: str,
-    title: str,
-    date: str,
-    output_dir: Optional[str] = None,
-    image_base_url: Optional[str] = None,
-    images_output_dir: Optional[str] = None,
-  ) -> bool:
-    """转换笔记文件为 Jekyll 格式并可选处理图片。
-    参数:
-      input_file (str): 输入 Markdown 文件路径。
-      title (str): 文章标题。
-      date (str): 发布日期（YYYY-MM-DD）。
-      output_dir (Optional[str]): 文章输出目录（未提供时默认 `root_dir/_posts`）。
-      image_base_url (Optional[str]): 图片站点前缀（相对路径重写用，未提供时使用类的默认 "/img"）。
-      images_output_dir (Optional[str]): 复制相对图片到该目录（未提供时默认 `root_dir/img`）。
-    返回:
-      bool: 转换是否成功。
-    """
-    try:
-      if not os.path.exists(input_file):
-        print(f"\n❌ 错误：找不到输入文件：{input_file}")
-        return False
-
-      with open(input_file, "r", encoding="utf-8") as f:
-        content = f.read()
-
-      # 从内容提取 arXiv id 作为图片管理键
-      image_key = self.extract_arxiv_key(content)
-
-      input_dir = os.path.dirname(input_file)
-      # 设定有效的基础 URL、复制目录与输出目录
-      effective_base_url = image_base_url if image_base_url is not None else self.image_base_url
-      effective_copy_dir = images_output_dir if images_output_dir is not None else os.path.join(self.root_dir, "img")
-      effective_output_dir = output_dir if output_dir is not None else os.path.join(self.root_dir, "_posts")
-
-      content = self.process_images(
-        content,
-        input_dir=input_dir,
-        image_base_url=effective_base_url,
-        copy_to_dir=effective_copy_dir,
-        image_key=image_key,
+    def html_image(match):
+      return source_attr.sub(
+        lambda attr: 'src="' + html.escape(rewrite_src(html.unescape(attr.group(2))), quote=True) + '"',
+        match.group(0), count=1
       )
 
-      processed_content = self.process_content(content)
-      full_content = self.create_front_matter(title, date) + processed_content
+    # Do not treat examples in fenced or inline code as actual images.
+    chunks = re.split(r"(^```[^\n]*\n.*?^```[^\n]*$|^~~~[^\n]*\n.*?^~~~[^\n]*$|`[^`\n]+`)",
+                      content, flags=re.MULTILINE | re.DOTALL)
+    for index in range(0, len(chunks), 2):
+      chunks[index] = image_tag.sub(html_image, markdown.sub(markdown_image, chunks[index]))
+    result = "".join(chunks)
+    # Validate every image before copying any of them.
+    for target, source in copies.items():
+      target.parent.mkdir(parents=True, exist_ok=True)
+      if not target.exists():
+        # Exclusive creation also protects against a concurrent conversion.
+        with target.open("xb") as destination, source.open("rb") as original:
+          shutil.copyfileobj(original, destination)
+    return result
 
-      # 验证日期格式
-      _ = datetime.strptime(date, "%Y-%m-%d")
-
-      os.makedirs(effective_output_dir, exist_ok=True)
-      file_name = f"{date}-{title.lower().replace(' ', '-')}.md"
-      output_file = os.path.join(effective_output_dir, file_name)
-
-      with open(output_file, "w", encoding="utf-8") as f:
-        f.write(full_content)
-
-      print("\n✅ 笔记转换成功！")
-      print(f"📝 新文件已创建：{output_file}")
-      print("\n⚠️ 请注意：")
-      print("1. 设置合适的文章标签 (tags)")
-      print("2. 添加文章描述 (description)")
-      print("3. 如需嵌入PDF，请按文件中的注释说明添加PDF嵌入代码")
-      print("4. 检查并调整文章的格式和内容")
-      print("5. 若使用了图片重写或复制，请核对图片是否正确显示")
-      if image_key:
-        print(f"6. 本文图片已按键分组：{image_key}")
+  def convert_note(self, input_file: str, title: str, date: str,
+                   output_dir=None, image_base_url=None, images_output_dir=None,
+                   slug=None, force=False) -> bool:
+    try:
+      if not title.strip():
+        raise ValueError("文章标题不能为空")
+      parsed_date = datetime.strptime(date, "%Y-%m-%d")
+      if parsed_date.strftime("%Y-%m-%d") != date:
+        raise ValueError("日期必须使用 YYYY-MM-DD 格式")
+      slug = slug if slug is not None else re.sub(r"[^\w-]+", "-", title.lower()).strip("-_")
+      if not slug or not re.fullmatch(r"[\w]+(?:[\w-]*[\w])?", slug):
+        raise ValueError("slug 只能包含文字、数字、下划线和连字符")
+      destination = Path(output_dir) if output_dir else self.root_dir / "_posts"
+      output = destination / f"{date}-{slug}.md"
+      if output.exists() and not force:
+        raise FileExistsError(f"文章已存在；如需覆盖请使用 --force：{output}")
+      if output.is_symlink():
+        raise ValueError("不能覆盖符号链接文章")
+      source = Path(input_file).resolve()
+      content = source.read_text(encoding="utf-8")
+      if content.lstrip().startswith("---\n"):
+        raise ValueError("输入已包含 front matter，请直接编辑该文章，避免重复转换")
+      content = self.process_images(
+        content, input_dir=source.parent,
+        image_base_url=image_base_url if image_base_url is not None else self.image_base_url,
+        copy_to_dir=images_output_dir if images_output_dir is not None else self.root_dir / "img",
+        image_key=self.extract_arxiv_key(content),
+      )
+      full_content = self.create_front_matter(title, date) + self.process_content(content)
+      destination.mkdir(parents=True, exist_ok=True)
+      with output.open("w" if force else "x", encoding="utf-8") as stream:
+        stream.write(full_content)
+      print(f"已生成未发布文章：{output}")
+      print("请完善 tags、description 并检查正文；准备发布时设置 published: true。")
       return True
-    except Exception as e:
-      print(f"\n❌ 转换过程中出现错误：{str(e)}")
+    except (OSError, ValueError) as error:
+      print(f"转换失败：{error}", file=sys.stderr)
       return False
 
 
 def main():
-  """命令行入口：解析参数并执行转换。"""
-  parser = argparse.ArgumentParser(description="将原始Markdown笔记转换为Jekyll博客格式，并处理图片引用")
-  parser.add_argument("input_file", help="输入的Markdown文件路径")
+  parser = argparse.ArgumentParser(description=__doc__)
+  parser.add_argument("input_file", help="原始 Markdown 笔记路径")
   parser.add_argument("title", help="文章标题")
-  parser.add_argument("--date", help="发布日期 (YYYY-MM-DD格式)", default=datetime.now().strftime("%Y-%m-%d"))
-  parser.add_argument("--output-dir", help="输出目录（默认 root_dir/_posts）", default=None)
-  parser.add_argument("--image-base-url", help="图片基础URL前缀（用于重写相对路径，默认 /img）", default=None)
-  parser.add_argument("--images-output-dir", help="复制相对图片到该目录（默认 root_dir/img）", default=None)
-
+  parser.add_argument("--date", default=datetime.now().strftime("%Y-%m-%d"))
+  parser.add_argument("--slug", help="文件名中的 slug，与显示标题分开")
+  parser.add_argument("--output-dir")
+  parser.add_argument("--image-base-url")
+  parser.add_argument("--images-output-dir")
+  parser.add_argument("--force", action="store_true", help="允许覆盖已有文章（不覆盖不同内容的图片）")
   args = parser.parse_args()
-
-  converter = PaperNoteConverter()
-  success = converter.convert_note(
-    input_file=args.input_file,
-    title=args.title,
-    date=args.date,
-    output_dir=args.output_dir,
-    image_base_url=args.image_base_url,
-    images_output_dir=args.images_output_dir,
-  )
-
-  if success:
-    print("\n🎉 转换完成！请检查新生成的文件并进行必要的调整。")
-  else:
-    print("\n❌ 转换失败，请检查错误信息并重试。")
+  return 0 if PaperNoteConverter().convert_note(**vars(args)) else 1
 
 
 if __name__ == "__main__":
-  main()
+  sys.exit(main())

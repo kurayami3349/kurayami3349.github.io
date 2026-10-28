@@ -21,7 +21,7 @@
 ## **署名与联系**
 - 作者：qq7r
 - 站点：`https://kurayami3349.github.io`
-- 邮箱：`25213050040@m.fudan.edu.cn`
+- 邮箱：`mu03cloud9926@163.com`
 
 ## **许可申请**
 - 如需转载、翻译、使用图片，请通过上述邮箱联系，获取书面授权。
@@ -30,3 +30,24 @@
 ## **致谢**
 - 主题：`jekyll-theme-chirpy`（MIT），原作者：Cotes Chung。主题自身的 `LICENSE` 已随仓库保留。
 
+## 本地开发与检查
+
+- 本机使用 Conda 的 `blob` 环境：`conda activate blob`。Ruby 版本记录于 `.ruby-version`，Gem 版本锁定于 `Gemfile.lock`。
+- 新环境运行 `bundle install`；不要删除锁文件来绕过依赖问题。工具检查还需要 Python 3.9 或更新版本。
+- `bash tools/run.sh`：本地预览；加 `-p` 使用生产配置。
+- `bash tools/test.sh`：运行转换器回归测试、文章元数据检查、生产构建、发布范围与版权检查、HTMLProofer 内部链接检查。外部链接不在自动检查范围内。
+- 无需激活环境也可运行：`conda run --no-capture-output -n blob bash tools/test.sh`。
+
+## 笔记与发布流程
+
+原始笔记放在 `raw/`，模板位于 `_templates/paper-note.md`。`raw/` 不纳入 Git 或站点构建，请自行备份。相对图片应位于笔记所在目录或其子目录。
+
+```bash
+python3 tools/convert_paper_note.py raw/note.md "Paper title" --slug paper-title --date 2026-10-28
+```
+
+转换器离线提取 arXiv 编号，保留图片说明，遇到缺图或图片重名冲突会失败。生成的文章默认 `published: false`；补齐标签、简介并检查正文后，再设为 `true`。已有文章默认拒绝覆盖，确需覆盖时使用 `--force`。图片内容冲突需先重命名。
+
+提交前运行 `bash tools/test.sh`。PR 会运行同一检查，只有 `main` 的提交会部署到 GitHub Pages。如使用 `tools/publish.sh`，先用 `git add <明确的文件路径>` 暂存要发布的改动；脚本要求无其他未暂存改动或未跟踪文件，测试通过后提交并推送，不会自动暂存整个仓库。
+
+文章与图片遵循 `LICENSE-Content`，公开声明位于 `/license/`；页脚与文章底部文案由 `_data/locales/zh-CN.yml` 覆盖。`AGENTS.md`、README、测试及原始笔记不进入发布产物。

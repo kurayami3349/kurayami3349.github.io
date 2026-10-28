@@ -1,14 +1,16 @@
-#!/usr/bin/env ruby
-#
-# Check for changed posts
+# frozen_string_literal: true
+
+require "open3"
 
 Jekyll::Hooks.register :posts, :post_init do |post|
+  next if post.data["last_modified_at"]
 
-  commit_num = `git rev-list --count HEAD "#{ post.path }"`
+  # Pass paths as arguments so quotes and shell metacharacters stay literal.
+  dates, _error, status = Open3.capture3(
+    "git", "-C", post.site.source, "log", "-2", "--format=%aI", "--", post.path
+  )
+  next unless status.success?
 
-  if commit_num.to_i > 1
-    lastmod_date = `git log -1 --pretty="%ad" --date=iso "#{ post.path }"`
-    post.data['last_modified_at'] = lastmod_date
-  end
-
+  entries = dates.lines.map(&:strip)
+  post.data["last_modified_at"] = entries.first if entries.length > 1
 end

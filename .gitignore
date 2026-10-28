@@ -1,9 +1,7 @@
 # Bundler cache
 .bundle
 vendor
-Gemfile.lock
 .nojekyll
-README.md
 
 # Jekyll cache
 .jekyll-cache
@@ -12,6 +10,10 @@ _site
 
 # RubyGems
 *.gem
+
+# Python caches
+__pycache__/
+*.py[cod]
 
 # NPM dependencies
 node_modules
@@ -26,6 +28,5 @@ package-lock.json
 
 # Misc
 _sass/vendors
-assets/js/*
 assets/lib/*
 raw/*

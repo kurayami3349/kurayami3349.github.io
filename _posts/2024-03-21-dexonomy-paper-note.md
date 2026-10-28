@@ -3,7 +3,7 @@ title: Dexonomy论文笔记
 date: 2024-03-21
 categories: [论文笔记]
 tags: [机器人, 抓取]
-description: Short summary of the post.
+description: Dexonomy 论文笔记：按照抓取分类体系合成多类型灵巧抓取，并构建大规模抓取数据集。
 ---
 
 {% include paper_note_style.html %}

@@ -1,6 +1,7 @@
 ---
 title: VLA-Survey
-date: 2025-11-17 +/-0800
+published: false
+date: 2025-11-17
 categories: [论文笔记]
 tags: [VLA-Survey]     # TAG names should always be lowercase
 author: sss01

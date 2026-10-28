@@ -9,12 +9,12 @@ theme: jekyll-theme-chirpy
 lang: zh-CN
 
 # Change to your timezone › https://kevinnovak.github.io/Time-Zone-Picker
-timezone: +/-0800
+timezone: Asia/Shanghai
 
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: Chirpy # the main title
+title: qq7r # the main title
 
 tagline: A personal blog for me. # it will display as the subtitle
 
@@ -29,13 +29,13 @@ github:
   username: kurayami3349 # change to your GitHub username
 
 twitter:
-  username: twitter_username # change to your Twitter username
+  username:
 
 social:
   # Change to your full name.
   # It will be displayed as the default author of the posts and the copyright owner in the Footer
   name: qq7r
-  email: 25213050040@m.fudan.edu.cn # change to your email address
+  email: mu03cloud9926@163.com # change to your email address
   links:
     # The first element serves as the copyright owner's link
     # - https://twitter.com/username # change to your Twitter homepage
@@ -132,7 +132,7 @@ comments:
 # Self-hosted static assets, optional › https://github.com/cotes2020/chirpy-static-assets
 assets:
   self_host:
-    enabled: true # boolean, keep empty means false
+    enabled: false # Use the theme CDN consistently in development and production.
     # specify the Jekyll environment, empty means both
     # only works if `assets.self_host.enabled` is 'true'
     env: development # [development | production]
@@ -206,6 +206,13 @@ compress_html:
     envs: [development]
 
 exclude:
+  - assets/lib
+  - raw
+  - tests
+  - AGENTS.md
+  - README
+  - Gemfile
+  - Gemfile.lock
   - "*.gem"
   - "*.gemspec"
   - docs
