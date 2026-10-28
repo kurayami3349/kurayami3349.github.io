@@ -28,21 +28,68 @@ class PaperNoteConverter:
     self.root_dir = ROOT
     self.image_base_url = image_base_url or "/img"
 
-  def create_front_matter(self, title: str, date: str) -> str:
-    # A JSON string is also a valid YAML scalar (including colons and quotes).
-    quoted_title = json.dumps(title, ensure_ascii=False)
-    return f'''---
-title: {quoted_title}
-date: {date}
-published: false
-categories: [论文笔记]
-tags: []
-description: ""
+  def extract_metadata(self, content: str):
+    # Read Zotero's optional Meta Data block; leave unrecognized fields intact.
+    paper, tags = {}, []
+    block = re.search(r'^#{1,6}\s+Meta Data\s*\n(?P<body>.*?)(?=^#{1,6}\s|\Z)',
+                      content, re.MULTILINE | re.DOTALL | re.IGNORECASE)
+    if block:
+      fields = {'title': 'title', 'author': 'authors', 'authors': 'authors',
+                'abstract': 'abstract', 'url': 'url', 'doi': 'doi',
+                'local link': 'local', 'venue': 'venue', 'code': 'code',
+                'project': 'project', 'pdf': 'pdf', 'arxiv id': 'arxiv'}
+      pattern = re.compile(
+        r'^[*-] +\*\*(?P<label>[^*]+?)[:：]\*\*[ \t]*(?P<value>.*?)'
+        r'(?=^[*-] +\*\*|\Z)', re.MULTILINE | re.DOTALL)
+
+      def field(match):
+        label = match['label'].lower().strip()
+        value = match['value'].strip().strip('\\').strip()
+        value = re.sub(r'\n(?:\*\*\*|---)\s*$', '', value).strip()
+        if label == 'research tags':
+          paper['subjects'] = re.findall(r'^\s*[*-] +(.+)', value, re.MULTILINE)
+        elif label == 'tags':
+          tags.extend(x.strip() for x in re.split(r'[,，]', value) if x.strip())
+        elif label in fields:
+          if label in ('url', 'doi', 'local link', 'code', 'project', 'pdf'):
+            link = re.search(r'(?:https?://|zotero://)[^\s<>)]*', value)
+            value = link[0] if link else value
+          paper[fields[label]] = value
+        else:
+          return match[0]
+        return ''
+
+      remaining = pattern.sub(field, block['body']).strip()
+      content = content[:block.start()] + remaining + '\n\n' + content[block.end():]
+      content = re.sub(r'^# Note\s*\n', '', content)
+    key = self.extract_arxiv_key('\n'.join([paper.get('arxiv', ''), paper.get('url', ''), content]))
+    if key:
+      arxiv = key.removeprefix('arxiv-')
+      paper.setdefault('url', f'https://arxiv.org/abs/{arxiv}')
+      paper.setdefault('pdf', f'https://arxiv.org/pdf/{arxiv}')
+    return paper, tags, content.strip()
+
+  def create_front_matter(self, title: str, date: str, paper=None, tags=None,
+                         description='') -> str:
+    # JSON values are valid YAML; no YAML dependency is needed for raw imports.
+    data = {'layout': 'post', 'title': title, 'date': date, 'published': False,
+            'categories': ['论文笔记'], 'tags': tags or [], 'description': description,
+            'math': True, 'toc': True}
+    front = '\n'.join(f'{key}: {json.dumps(value, ensure_ascii=False)}' for key, value in data.items())
+    paper = {'title': title, 'authors': '', 'venue': '', 'url': '', 'pdf': '',
+             'code': '', 'project': '', **(paper or {})}
+    front += '\npaper:\n' + '\n'.join(
+      f'  {key}: {json.dumps(value, ensure_ascii=False)}' for key, value in paper.items())
+    return '---\n' + front + '''
 ---
 
-{{% include paper_note_style.html %}}
+{% include paper_note_style.html %}
+{% include pdf_embed.html file=page.paper.pdf %}
 
 <div class="paper-note-container" markdown="1">
+
+{% include paper_note_header.html %}
+
 '''
 
   def process_content(self, content: str) -> str:
@@ -67,6 +114,8 @@ description: ""
     if image_key and not re.fullmatch(r"[\w-]+(?:\.[\w-]+)*", image_key):
       raise ValueError("图片分组键无效")
     target_root = image_root / image_key if image_root and image_key else image_root
+    if target_root and not target_root.resolve().is_relative_to(image_root):
+      raise ValueError('图片分组目录不能位于输出目录之外')
     copies = {}
 
     def rewrite_src(src):
@@ -110,7 +159,11 @@ description: ""
 
     def markdown_image(match):
       src = rewrite_src(match.group("angle") or match.group("src"))
-      return f'![{match.group("alt")}]({src}{match.group("title") or ""})'
+      alt = match.group('alt')
+      if '<img' in alt:  # Zotero sometimes exports an HTML image inside Markdown alt text.
+        label = re.search(r'\balt="([^"]*)"', alt)
+        alt = label[1] if label and label[1] else '论文插图'
+      return f'![{alt}]({src}{match.group("title") or ""})'
 
     def html_image(match):
       return source_attr.sub(
@@ -124,6 +177,9 @@ description: ""
     for index in range(0, len(chunks), 2):
       chunks[index] = image_tag.sub(html_image, markdown.sub(markdown_image, chunks[index]))
     result = "".join(chunks)
+    # Validate every image before creating even an empty paper directory.
+    if target_root and image_key:
+      target_root.mkdir(parents=True, exist_ok=True)
     # Validate every image before copying any of them.
     for target, source in copies.items():
       target.parent.mkdir(parents=True, exist_ok=True)
@@ -135,7 +191,8 @@ description: ""
 
   def convert_note(self, input_file: str, title: str, date: str,
                    output_dir=None, image_base_url=None, images_output_dir=None,
-                   slug=None, force=False) -> bool:
+                   slug=None, force=False, tags=None, description='', paper_title=None,
+                   authors=None, venue=None, paper_url=None, pdf=None, code=None, project=None) -> bool:
     try:
       if not title.strip():
         raise ValueError("文章标题不能为空")
@@ -155,13 +212,22 @@ description: ""
       content = source.read_text(encoding="utf-8")
       if content.lstrip().startswith("---\n"):
         raise ValueError("输入已包含 front matter，请直接编辑该文章，避免重复转换")
+      paper, extracted_tags, content = self.extract_metadata(content)
+      overrides = {'title': paper_title, 'authors': authors, 'venue': venue,
+                   'url': paper_url, 'pdf': pdf, 'code': code, 'project': project}
+      paper.update({key: value for key, value in overrides.items() if value is not None})
+      if not paper.get('pdf'):
+        key = self.extract_arxiv_key(paper.get('url', ''))
+        if key:
+          paper['pdf'] = 'https://arxiv.org/pdf/' + key.removeprefix('arxiv-')
+      image_key = self.extract_arxiv_key('\n'.join([paper.get('arxiv', ''), paper.get('url', ''), paper.get('pdf', ''), content]))
       content = self.process_images(
         content, input_dir=source.parent,
         image_base_url=image_base_url if image_base_url is not None else self.image_base_url,
         copy_to_dir=images_output_dir if images_output_dir is not None else self.root_dir / "img",
-        image_key=self.extract_arxiv_key(content),
+        image_key=image_key,
       )
-      full_content = self.create_front_matter(title, date) + self.process_content(content)
+      full_content = self.create_front_matter(title, date, paper, tags if tags is not None else extracted_tags, description) + self.process_content(content)
       destination.mkdir(parents=True, exist_ok=True)
       with output.open("w" if force else "x", encoding="utf-8") as stream:
         stream.write(full_content)
@@ -182,6 +248,10 @@ def main():
   parser.add_argument("--output-dir")
   parser.add_argument("--image-base-url")
   parser.add_argument("--images-output-dir")
+  parser.add_argument('--tag', dest='tags', action='append', help='博客标签，可重复传入；覆盖原始 Tags 字段')
+  parser.add_argument('--description', default='', help='文章简介')
+  for option in ('paper-title', 'authors', 'venue', 'paper-url', 'pdf', 'code', 'project'):
+    parser.add_argument('--' + option, help='补充或覆盖论文元数据')
   parser.add_argument("--force", action="store_true", help="允许覆盖已有文章（不覆盖不同内容的图片）")
   args = parser.parse_args()
   return 0 if PaperNoteConverter().convert_note(**vars(args)) else 1

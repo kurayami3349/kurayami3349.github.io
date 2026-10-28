@@ -1,179 +1,90 @@
-<!-- 论文笔记样式 -->
+<!-- Distill-inspired reading layout: https://alshedivat.github.io/al-folio/blog/2021/distill/ -->
 <style>
-.paper-note-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: clamp(0rem, 2vw, 2rem);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.6;
-}
-
-/* 确保Markdown内容被正确渲染 */
-.paper-note-container[markdown="1"] {
-  display: block;
-}
-
-.paper-note-container h1 {
-  font-size: 2.2em;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #4285f4;
-  color: var(--heading-color);
-}
-
-.paper-note-container h2 {
-  font-size: 1.8em;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: var(--heading-color);
-  position: relative;
-  padding-left: 1rem;
-}
-
-.paper-note-container h2::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.2em;
-  height: 0.8em;
-  width: 4px;
-  background: #4285f4;
-  border-radius: 2px;
-}
-
-.paper-note-container h3 {
-  font-size: 1.4em;
-  margin-top: 1.5rem;
-  color: var(--text-color);
-}
-
-.paper-note-container p {
-  margin: 1rem 0;
-  color: var(--text-color);
-  text-align: justify;
-}
-
-.paper-note-container blockquote {
-  margin: 1.5rem 0;
-  padding: 1rem 1.5rem;
-  border-left: 4px solid #4285f4;
-  background-color: var(--card-bg);
-  color: var(--text-color);
-  border-radius: 0 4px 4px 0;
-}
-
-.paper-note-container table {
-  width: 100%;
-  margin: 1.5rem 0;
-  border-collapse: collapse;
-  border-spacing: 0;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.paper-note-container th,
-.paper-note-container td {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--main-border-color);
-  text-align: left;
-}
-
-.paper-note-container th {
-  background-color: #4285f4;
-  color: white;
-  font-weight: 600;
-}
-
-.paper-note-container tr:nth-child(even) {
-  background-color: var(--card-bg);
-}
-
-.paper-note-container img {
-  max-width: 100%;
-  height: auto;
-  margin: 1.5rem auto;
-  display: block;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.paper-note-container figure {
-  margin: 2rem 0;
-  text-align: center;
-}
-
-.paper-note-container figcaption {
-  margin-top: 0.5rem;
-  color: var(--text-muted-color);
-  font-size: 0.9em;
-  font-style: italic;
-}
-
-.paper-note-container code {
-  background-color: var(--card-bg);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: Consolas, Monaco, 'Andale Mono', monospace;
-  font-size: 0.9em;
-  color: var(--highlighter-rouge-color);
-}
-
-.paper-note-container pre {
-  background-color: var(--card-bg);
-  padding: 1rem;
-  border-radius: 4px;
-  overflow-x: auto;
-  border: 1px solid var(--main-border-color);
-}
-
-.paper-note-container pre code {
-  padding: 0;
-  color: inherit;
-}
-
-.paper-note-container ul,
-.paper-note-container ol {
-  padding-left: 1.5rem;
-  margin: 1rem 0;
-}
-
-.paper-note-container li {
-  margin: 0.5rem 0;
-  color: var(--text-color);
-}
-
-.paper-note-container hr {
-  margin: 2rem 0;
-  border: none;
-  border-top: 2px solid var(--main-border-color);
-}
-
-/* Meta Data 样式 */
-.meta-data {
-  background-color: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 4px;
-  margin: 2rem 0;
-  border: 1px solid var(--main-border-color);
-}
-
-.meta-data[markdown="1"] {
-  display: block;
-}
-
-.meta-data h3 {
-  margin-top: 0 !important;
-  color: var(--heading-color);
-}
-
-.meta-data ul {
-  list-style: none;
-  padding-left: 0;
-}
-
-.meta-data li {
-  margin: 0.8rem 0;
-}
-
+  body:has(.paper-note-container) {
+    --paper-width: 700px;
+    --paper-rule: var(--main-border-color, #e5e5e5);
+    --paper-muted: var(--text-muted-color, #666);
+  }
+  body:has(.paper-note-container) article > header,
+  body:has(.paper-note-container) .post-tail-wrapper {
+    max-width: var(--paper-width); margin-inline: auto;
+  }
+  body:has(.paper-note-container) article > header h1 {
+    font-family: system-ui, sans-serif; font-size: clamp(1.6rem, 2vw, 2.1rem);
+    line-height: 1.45; letter-spacing: normal; text-wrap: pretty; overflow-wrap: break-word;
+  }
+  body:has(.paper-note-container) #topbar { padding-right: 8rem !important; }
+  .paper-note-container {
+    max-width: var(--paper-width); margin: 0 auto; padding: 0;
+    color: var(--text-color); font-size: 1.0625rem; line-height: 1.85;
+    overflow-wrap: break-word;
+  }
+  .paper-note-container :is(h1, h2, h3, h4) {
+    color: var(--heading-color); font-weight: 600; line-height: 1.35;
+    letter-spacing: -.02em; scroll-margin-top: 5rem;
+  }
+  .paper-note-container h2 {
+    margin: 3rem 0 1.2rem; padding-top: 1.6rem;
+    border-top: 1px solid var(--paper-rule); font-size: 1.65rem;
+  }
+  .paper-note-container h3 { margin: 2rem 0 .8rem; font-size: 1.25rem; }
+  .paper-note-container h4 { margin: 1.5rem 0 .5rem; font-size: 1.05rem; }
+  .paper-note-container p { margin: 0 0 1.25rem; text-align: left; }
+  .paper-note-container :is(ul, ol) { padding-left: 1.4rem; margin: 0 0 1.25rem; }
+  .paper-note-container li { margin: .35rem 0; }
+  .paper-note-container li :is(p, ul, ol) { margin-bottom: .6rem; }
+  .paper-note-container a { text-underline-offset: .2em; }
+  .paper-note-container :is(img, video) { max-width: 100%; height: auto; }
+  .paper-note-container figure { margin: 2rem 0; }
+  .paper-note-container figure img { display: block; margin: 0 auto; border-radius: 0; }
+  .paper-note-container figcaption {
+    margin-top: .75rem; font-size: .85rem; line-height: 1.6; color: var(--paper-muted);
+  }
+  .paper-note-container blockquote {
+    margin: 1.5rem 0; padding: .25rem 0 .25rem 1.2rem;
+    border-left: 2px solid var(--link-color); color: var(--paper-muted);
+  }
+  .paper-note-container blockquote p:last-child { margin-bottom: 0; }
+  .paper-note-container table { width: 100%; font-size: .9rem; border-collapse: collapse; }
+  .paper-note-container :is(th, td) {
+    padding: .65rem .8rem; border: 0; border-bottom: 1px solid var(--paper-rule); text-align: left;
+  }
+  .paper-note-container th { font-weight: 600; background: transparent; }
+  .paper-note-container mjx-container {
+    max-width: 100%; overflow-x: auto; overflow-y: hidden;
+  }
+  .paper-note-container pre { overflow-x: auto; font-size: .85rem; }
+  .paper-note-container hr { margin: 2.5rem 0; border-color: var(--paper-rule); }
+  .paper-byline {
+    display: grid; grid-template-columns: 2fr 1fr; gap: 1rem 2rem;
+    margin: 0 0 2rem; padding: 1.25rem 0; border-block: 1px solid var(--paper-rule);
+    font-size: .85rem; line-height: 1.6;
+  }
+  .paper-byline dt { margin-bottom: .3rem; font-size: .7rem; letter-spacing: .1em; color: var(--paper-muted); }
+  .paper-byline dd { margin: 0; }
+  .paper-title { grid-column: 1 / -1; }
+  .paper-links { display: flex; flex-wrap: wrap; gap: 1.2rem; font-size: .9rem; }
+  .paper-summary { margin: 2rem 0; font-size: 1.15rem; line-height: 1.8; }
+  .paper-summary > p:first-child { display: block; margin-bottom: .7rem; font-size: .8rem; color: var(--paper-muted); }
+  .paper-abstract { margin: 1.5rem 0 2.5rem; padding: 1rem 0; border-block: 1px solid var(--paper-rule); }
+  .paper-abstract summary { cursor: pointer; font-size: .9rem; color: var(--paper-muted); }
+  .paper-abstract[open] summary { margin-bottom: 1rem; }
+  .paper-sidenote {
+    margin: 1rem 0; padding-left: 1rem; border-left: 1px solid var(--paper-rule);
+    font-size: .82rem; line-height: 1.65; color: var(--paper-muted);
+  }
+  body:has(.paper-note-container) .content > .footnotes {
+    max-width: var(--paper-width); margin: 2rem auto 0;
+    padding-top: 1rem; border-top: 1px solid var(--paper-rule);
+    font-size: .85rem; color: var(--paper-muted);
+  }
+  .paper-subjects { margin-top: 1rem !important; font-size: .8rem; color: var(--paper-muted); }
+  .paper-tags { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; font-size: .85rem; }
+  .paper-note-container .table-wrapper { max-width: 100%; overflow-x: auto; }
+  .paper-note-container > * { min-width: 0; }
+  @media (max-width: 600px) {
+    .paper-note-container { font-size: 1rem; line-height: 1.8; }
+    .paper-byline { grid-template-columns: 1fr; gap: 1rem; }
+    .paper-note-container h2 { font-size: 1.4rem; }
+  }
 </style>

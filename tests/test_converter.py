@@ -119,6 +119,77 @@ class ConverterTests(unittest.TestCase):
     self.assertEqual(result.returncode, 0, result.stderr)
     self.assertTrue((self.images / 'figure.png').exists())
 
+  def test_zotero_dash_metadata_without_images_creates_paper_directory(self):
+    self.note.write_text("""### Meta Data
+
+- **Title:** Zeva: In-context causal learning
+- **Author:** Fu Chen; Xin Ding
+- **ArXiv id:** arXiv:2608.30880
+- **DOI:** [10.48550/arXiv.2608.30880](https://doi.org/10.48550/arXiv.2608.30880)
+- **URL:** [http://arxiv.org/abs/2608.30880](http://arxiv.org/abs/2608.30880)
+- **Abstract:** Generalizable manipulation remains difficult.
+- **Research Tags:**
+  - Computer Science - Robotics
+
+## 1. 问题与背景
+
+Keep this paragraph.
+""")
+    self.assertTrue(self.convert(tags=['VLA'], description='A paper note'))
+    post = (self.posts / '2025-11-24-paper.md').read_text()
+    self.assertTrue((self.images / 'arxiv-2608.30880').is_dir())
+    self.assertIn('paper_note_header.html', post)
+    self.assertIn('pdf_embed.html file=page.paper.pdf', post)
+    self.assertIn('pdf: "https://arxiv.org/pdf/2608.30880"', post)
+    self.assertIn('subjects: ["Computer Science - Robotics"]', post)
+    self.assertIn('tags: ["VLA"]', post)
+    self.assertIn('abstract: "Generalizable manipulation remains difficult."', post)
+    self.assertIn('## 1. 问题与背景', post)
+    self.assertIn('Keep this paragraph.', post)
+    self.assertNotIn('### Meta Data', post)
+
+  def test_attachment_figure_caption_and_unknown_metadata_are_preserved(self):
+    (self.raw / 'attachments').mkdir()
+    (self.raw / 'attachments/figure.png').write_bytes(b'figure')
+    self.note.write_text("""### Meta Data
+
+* **Title:** A paper
+* **ArXiv id:** arXiv:2608.30880
+* **Tags:** robot, learning
+* **Custom field:** Keep this metadata.
+
+## 方法
+
+<figure>
+  <img src="attachments/figure.png" alt="Architecture">
+  <figcaption>图 1. Preserve this caption.</figcaption>
+</figure>
+""")
+    self.assertTrue(self.convert())
+    post = (self.posts / '2025-11-24-paper.md').read_text()
+    self.assertIn('tags: ["robot", "learning"]', post)
+    self.assertIn('Keep this metadata.', post)
+    self.assertIn('src="/img/arxiv-2608.30880/figure.png"', post)
+    self.assertIn('<figcaption>图 1. Preserve this caption.</figcaption>', post)
+    self.assertEqual((self.images / 'arxiv-2608.30880/figure.png').read_bytes(), b'figure')
+
+  def test_empty_paper_directory_cannot_escape_through_symlink(self):
+    self.images.mkdir()
+    (self.images / 'arxiv-2608.30880').symlink_to(self.root / 'outside')
+    self.note.write_text('arXiv:2608.30880')
+    self.assertFalse(self.convert())
+    self.assertFalse((self.root / 'outside').exists())
+
+  def test_zotero_embedded_image_alt_and_explicit_metadata(self):
+    (self.raw / 'attachments').mkdir()
+    (self.raw / 'attachments/figure.png').write_bytes(b'figure')
+    self.note.write_text('![<img alt="" src="attachments/figure.png"> | 661](attachments/figure.png)')
+    self.assertTrue(self.convert(paper_url='https://arxiv.org/abs/2608.30880', authors='A; B'))
+    post = (self.posts / '2025-11-24-paper.md').read_text()
+    self.assertIn('![论文插图](/img/arxiv-2608.30880/figure.png)', post)
+    self.assertIn('authors: "A; B"', post)
+    self.assertIn('pdf: "https://arxiv.org/pdf/2608.30880"', post)
+
   def test_cli_failure_returns_nonzero(self):
     script = Path(__file__).resolve().parents[1] / 'tools/convert_paper_note.py'
     result = subprocess.run([sys.executable, str(script), str(self.raw / 'missing.md'), 'Example',

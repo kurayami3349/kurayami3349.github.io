@@ -40,13 +40,20 @@
 
 ## 笔记与发布流程
 
-原始笔记放在 `raw/`，模板位于 `_templates/paper-note.md`。`raw/` 不纳入 Git 或站点构建，请自行备份。相对图片应位于笔记所在目录或其子目录。
+原始笔记放在 `raw/`，正文章节参考 `_templates/paper-note.md`。`raw/` 不纳入 Git 或站点构建，请自行备份。上传普通 Markdown（无需 Jekyll front matter），图片放在笔记旁的 `attachments/` 子目录，例如 `![结构图](attachments/architecture.png)`。
 
 ```bash
-python3 tools/convert_paper_note.py raw/note.md "Paper title" --slug paper-title --date 2026-10-28
+python3 tools/convert_paper_note.py raw/note.md "Paper title" \
+  --slug paper-title --date 2026-10-28 --tag VLA --description "这篇笔记的重点"
 ```
 
-转换器离线提取 arXiv 编号，保留图片说明，遇到缺图或图片重名冲突会失败。生成的文章默认 `published: false`；补齐标签、简介并检查正文后，再设为 `true`。已有文章默认拒绝覆盖，确需覆盖时使用 `--force`。图片内容冲突需先重命名。
+转换器支持 Zotero 的 `### Meta Data` 块，字段可使用 `- **Title:** ...` 或 `* **Title:** ...`；自动提取 Title、Author、ArXiv id、DOI、URL、Abstract、Research Tags。研究领域保存在 `paper.subjects`，博客标签使用 `--tag`（可重复）或元数据中的 `Tags` 字段。可用 `--authors`、`--venue`、`--paper-url`、`--pdf`、`--code`、`--project` 补充或覆盖信息。
+
+- 识别 arXiv 编号后，图片继续归档到 `img/arxiv-编号/`；没有图片也会创建该目录。无编号时沿用 `img/`。
+- Markdown 图片、HTML `<figure>` / `<img>` 的路径会转换，已有 caption 和正文保留；不会自动编写图注或 Insights。
+- 自动生成新模板共用的论文页头、折叠摘要、PDF 阅读器，并启用数学公式和 Chirpy 目录。
+- 生成文章默认 `published: false`。补齐标签、简介并检查内容后再发布。完整 Jekyll 文章无需重复转换。
+- 缺图、越界路径及不同内容的同名图片会报错；已有文章默认拒绝覆盖，确需覆盖时使用 `--force`。
 
 提交前运行 `bash tools/test.sh`。PR 会运行同一检查，只有 `main` 的提交会部署到 GitHub Pages。如使用 `tools/publish.sh`，先用 `git add <明确的文件路径>` 暂存要发布的改动；脚本要求无其他未暂存改动或未跟踪文件，测试通过后提交并推送，不会自动暂存整个仓库。
 

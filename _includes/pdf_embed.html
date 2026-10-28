@@ -1,24 +1,172 @@
-<!-- SPDX-License-Identifier: MIT -->
-{% assign pdf_url = include.file | relative_url %}
-<details class="paper-pdf">
-  <summary>阅读原文 PDF</summary>
-  <p><a href="{{ pdf_url | escape }}" target="_blank" rel="noopener noreferrer">在新窗口打开 PDF</a>（无法内嵌显示时可使用此链接）</p>
-  <iframe
-    src="{{ pdf_url | escape }}#view=fitH"
-    title="{{ include.title | default: '论文 PDF' | escape }}"
-    loading="lazy"
-    referrerpolicy="no-referrer"
-  ></iframe>
-</details>
-
-<style>
-  .paper-pdf {
-    margin: 1.5rem 0;
-    padding: 1rem;
-    border: 1px solid var(--main-border-color);
-    border-radius: 0.5rem;
-    background: var(--card-bg);
-  }
-  .paper-pdf summary { cursor: pointer; color: var(--link-color); }
-  .paper-pdf iframe { width: 100%; height: 70vh; border: 0; }
-</style>
+<!-- PDF.js (Apache-2.0) is loaded on demand from a pinned CDN release. -->
+{% assign pdf_file = include.file | default: page.paper.pdf %}
+{% if pdf_file and pdf_file != empty %}
+{% assign pdf_url = pdf_file | relative_url %}
+<div class="paper-pdf">
+  <button class="paper-pdf-toggle" type="button" aria-expanded="false" aria-controls="paper-pdf-panel">阅读 PDF ↗</button>
+  <aside id="paper-pdf-panel" aria-label="论文对照阅读" hidden>
+    <div class="paper-pdf-head"><span>论文原文</span><a href="{{ pdf_url | escape }}" target="_blank" rel="noopener">新窗口 ↗</a></div>
+    <div class="paper-pdf-divider" role="separator" tabindex="0" aria-label="调整论文栏宽度" aria-orientation="vertical" aria-valuemin="35" aria-valuemax="65" aria-valuenow="50"></div>
+    <iframe title="论文 PDF 阅读器"></iframe>
+  </aside>
+  <template>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/web/pdf_viewer.css">
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 13px/1.4 system-ui, sans-serif; background: #e5e7eb; color: #202124; }
+      header { height: 80px; padding: 6px 10px; background: #f8f9fa; border-bottom: 1px solid #ccc; }
+      fieldset { border: 0; padding: 0; margin: 0; }
+      nav, form { display: flex; align-items: center; gap: 6px; height: 32px; }
+      button, input { font: inherit; height: 28px; border: 1px solid #c7cbd1; border-radius: 4px; background: white; color: inherit; }
+      button { cursor: pointer; padding: 0 8px; }
+      button:focus-visible, input:focus-visible { outline: 2px solid #2563eb; }
+      input[type=number] { width: 48px; }
+      input[type=search] { min-width: 0; flex: 1; padding: 0 6px; }
+      #pages { position: absolute; inset: 80px 0 0; overflow: auto; }
+      #status { position: absolute; top: 95px; left: 16px; right: 16px; z-index: 1; }
+      #matches { min-width: 3em; font-size: 11px; }
+    </style>
+    <header data-file="{{ pdf_url | escape }}">
+      <fieldset disabled>
+        <nav aria-label="PDF 翻页与缩放">
+          <button id="previous" title="上一页" aria-label="上一页">‹</button>
+          <input id="page" type="number" min="1" value="1" aria-label="页码">
+          <span id="total">/ —</span>
+          <button id="next" title="下一页" aria-label="下一页">›</button>
+          <button id="smaller" aria-label="缩小">−</button>
+          <button id="larger" aria-label="放大">＋</button>
+          <button id="fit">适合宽度</button>
+        </nav>
+        <form role="search">
+          <input id="query" type="search" placeholder="搜索论文 · Enter 下一个" aria-label="搜索论文">
+          <output id="matches" aria-live="polite"></output>
+          <button type="submit">查找</button>
+        </form>
+      </fieldset>
+    </header>
+    <p id="status" role="status">正在加载论文…</p>
+    <div id="pages"><div class="pdfViewer"></div></div>
+    <script type="module">
+      const $ = selector => document.querySelector(selector);
+      const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/';
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') parent.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      });
+      try {
+        const pdfjs = await import(base + 'legacy/build/pdf.mjs');
+        const { EventBus, PDFViewer, PDFLinkService, PDFFindController } = await import(base + 'legacy/web/pdf_viewer.mjs');
+        pdfjs.GlobalWorkerOptions.workerSrc = base + 'legacy/build/pdf.worker.mjs';
+        const eventBus = new EventBus();
+        const linkService = new PDFLinkService({ eventBus, externalLinkTarget: 2 });
+        const findController = new PDFFindController({ eventBus, linkService });
+        const viewer = new PDFViewer({ container: $('#pages'), eventBus, linkService, findController });
+        linkService.setViewer(viewer);
+        eventBus.on('pagesinit', () => { viewer.currentScaleValue = 'page-width'; });
+        eventBus.on('pagechanging', ({ pageNumber }) => { $('#page').value = pageNumber; });
+        eventBus.on('updatefindmatchescount', ({ matchesCount }) => {
+          $('#matches').value = `${matchesCount.current}/${matchesCount.total}`;
+        });
+        eventBus.on('updatefindcontrolstate', ({ state }) => {
+          if (state === 1) $('#matches').value = '未找到';
+        });
+        const pdf = await pdfjs.getDocument({
+          url: $('header').dataset.file, cMapUrl: base + 'cmaps/', cMapPacked: true,
+          standardFontDataUrl: base + 'standard_fonts/', wasmUrl: base + 'wasm/'
+        }).promise;
+        viewer.setDocument(pdf);
+        linkService.setDocument(pdf);
+        $('#total').textContent = `/ ${pdf.numPages}`;
+        $('#page').max = pdf.numPages;
+        $('fieldset').disabled = false;
+        $('#status').hidden = true;
+        $('#previous').onclick = () => { viewer.currentPageNumber = Math.max(1, viewer.currentPageNumber - 1); };
+        $('#next').onclick = () => { viewer.currentPageNumber = Math.min(pdf.numPages, viewer.currentPageNumber + 1); };
+        $('#page').onchange = () => {
+          viewer.currentPageNumber = Math.max(1, Math.min(pdf.numPages, Number($('#page').value) || 1));
+        };
+        $('#smaller').onclick = () => { viewer.currentScale = Math.max(.25, viewer.currentScale / 1.2); };
+        $('#larger').onclick = () => { viewer.currentScale = Math.min(4, viewer.currentScale * 1.2); };
+        $('#fit').onclick = () => { viewer.currentScaleValue = 'page-width'; };
+        $('form').onsubmit = event => {
+          event.preventDefault();
+          eventBus.dispatch('find', { source: window, type: 'again', query: $('#query').value,
+            caseSensitive: false, entireWord: false, highlightAll: true, findPrevious: false });
+        };
+        new ResizeObserver(() => {
+          if ($('#pages').clientWidth && viewer.currentScaleValue === 'page-width') viewer.currentScaleValue = 'page-width';
+        }).observe($('#pages'));
+      } catch (error) {
+        $('#status').textContent = '论文加载失败，请用上方“新窗口”打开，或 ';
+        const retry = document.createElement('button');
+        retry.textContent = '重试';
+        retry.onclick = () => location.reload();
+        $('#status').append(retry);
+        console.error('PDF reader:', error);
+      }
+    </script>
+  </template>
+  <style>
+    .paper-pdf-toggle { position: fixed; top: 12px; right: 16px; z-index: 1101; padding: 8px 14px; border: 1px solid var(--main-border-color); border-radius: 6px; background: var(--main-bg); color: var(--link-color); font: 500 14px/1.4 system-ui; cursor: pointer; }
+    #paper-pdf-panel { position: fixed; inset: 0 0 0 auto; width: var(--paper-pdf-width, 50vw); z-index: 1100; background: var(--main-bg); border-left: 1px solid var(--main-border-color); }
+    #paper-pdf-panel[hidden] { display: none; }
+    .paper-pdf-head { display: flex; align-items: center; gap: 1rem; height: 52px; padding: 0 130px 0 16px; font-size: 13px; white-space: nowrap; }
+    #paper-pdf-panel iframe { display: block; width: 100%; height: calc(100% - 52px); border: 0; }
+    .paper-pdf-divider { position: absolute; top: 0; bottom: 0; left: -4px; width: 8px; cursor: col-resize; touch-action: none; }
+    .paper-pdf-divider:focus-visible { outline: 2px solid var(--link-color); }
+    html.paper-reading #sidebar, html.paper-reading #panel-wrapper { display: none !important; }
+    html.paper-reading #main-wrapper { margin-left: 0 !important; margin-right: var(--paper-pdf-width, 50vw); }
+    html.paper-reading #main-wrapper > .container { max-width: none; }
+    html.paper-reading main, html.paper-reading #tail-wrapper { width: 100%; }
+    @media (max-width: 900px) {
+      html.paper-reading body { overflow: hidden; }
+      #paper-pdf-panel { width: 100%; }
+      .paper-pdf-divider { display: none; }
+      html.paper-reading #main-wrapper { margin-right: 0; }
+    }
+  </style>
+  <script>
+    (() => {
+      const root = document.currentScript.closest('.paper-pdf');
+      const toggle = root.querySelector('button');
+      const panel = root.querySelector('aside');
+      const frame = root.querySelector('iframe');
+      const divider = root.querySelector('.paper-pdf-divider');
+      const mobile = matchMedia('(max-width: 900px)');
+      const main = document.querySelector('#main-wrapper');
+      let loaded = false, width = 50;
+      const updateFocus = () => { if (main) main.inert = !panel.hidden && mobile.matches; };
+      const setOpen = open => {
+        panel.hidden = !open;
+        document.documentElement.classList.toggle('paper-reading', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.textContent = open ? '收起 PDF ×' : '阅读 PDF ↗';
+        updateFocus();
+        if (open && !loaded) {
+          frame.srcdoc = '<!doctype html><html lang="zh-CN">' + root.querySelector('template').innerHTML + '</html>';
+          loaded = true;
+        }
+        (open ? frame : toggle).focus();
+      };
+      toggle.onclick = () => setOpen(panel.hidden);
+      window.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) setOpen(false); });
+      mobile.addEventListener('change', updateFocus);
+      const resize = value => {
+        width = Math.max(35, Math.min(65, value));
+        document.documentElement.style.setProperty('--paper-pdf-width', `${width}vw`);
+        divider.setAttribute('aria-valuenow', String(Math.round(width)));
+      };
+      divider.onpointerdown = event => { divider.setPointerCapture(event.pointerId); };
+      divider.onpointermove = event => {
+        if (divider.hasPointerCapture(event.pointerId)) resize((innerWidth - event.clientX) / innerWidth * 100);
+      };
+      divider.onkeydown = event => {
+        if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          event.preventDefault(); resize(width + (event.key === 'ArrowLeft' ? 2 : -2));
+        }
+      };
+      document.addEventListener('DOMContentLoaded', () => document.body.append(root), { once: true });
+    })();
+  </script>
+</div>
+{% endif %}

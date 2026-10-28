@@ -1,0 +1,32 @@
+{% if page.tags.size > 0 %}
+<nav class="paper-tags" aria-label="笔记标签">
+  {% for tag in page.tags %}<a class="post-tag" href="{{ tag | slugify | prepend: '/tags/' | append: '/' | relative_url }}">{{ tag | escape }}</a>{% endfor %}
+</nav>
+{% endif %}
+
+<dl class="paper-byline">
+  {% if page.paper.authors and page.paper.authors != empty %}<div><dt>AUTHORS · 作者</dt><dd>{{ page.paper.authors | escape }}</dd></div>{% endif %}
+  {% if page.paper.venue and page.paper.venue != empty %}<div><dt>PUBLICATION · 发表</dt><dd>{{ page.paper.venue | escape }}</dd></div>{% endif %}
+  <div class="paper-title"><dt>PAPER · 论文</dt><dd>{{ page.paper.title | escape }}</dd></div>
+</dl>
+<nav class="paper-links" aria-label="论文相关链接">
+  {% if page.paper.url and page.paper.url != empty %}<a href="{{ page.paper.url | escape }}">论文</a>{% endif %}
+  {% if page.paper.code and page.paper.code != empty %}<a href="{{ page.paper.code | escape }}">代码</a>{% endif %}
+  {% if page.paper.project and page.paper.project != empty %}<a href="{{ page.paper.project | escape }}">项目主页</a>{% endif %}
+</nav>
+
+{% if page.paper.subjects.size > 0 %}
+<p class="paper-subjects">研究领域：{{ page.paper.subjects | join: ' · ' | escape }}</p>
+{% endif %}
+{% if page.paper.takeaway and page.paper.takeaway != empty %}
+<div class="paper-summary">
+  <p><strong>核心结论 · TAKEAWAY</strong></p>
+  {{ page.paper.takeaway | markdownify }}
+</div>
+{% endif %}
+{% if page.paper.abstract and page.paper.abstract != empty %}
+<details class="paper-abstract">
+  <summary>阅读论文摘要</summary>
+  <p>{{ page.paper.abstract | escape | newline_to_br }}</p>
+</details>
+{% endif %}
