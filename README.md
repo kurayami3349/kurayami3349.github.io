@@ -55,6 +55,16 @@ python3 tools/convert_paper_note.py raw/note.md "Paper title" \
 - 生成文章默认 `published: false`。补齐标签、简介并检查内容后再发布。完整 Jekyll 文章无需重复转换。
 - 缺图、越界路径及不同内容的同名图片会报错；已有文章默认拒绝覆盖，确需覆盖时使用 `--force`。
 
+### 发布前全文措辞审校（必做）
+
+每次创建、修改或导入论文笔记，发布前必须使用仓库内的 [anti-defensive-writing skill](.agents/skills/anti-defensive-writing/SKILL.md) 通读全文。规则来自 [Kiterlin/anti-defensive-writing](https://github.com/Kiterlin/anti-defensive-writing)，许可证随 skill 保留。
+
+- 检查标题、简介、核心结论、正文、图注和参考说明；原文摘要作为引用保留。
+- 直接记录论文的方法、实验条件与结果。删去为防备假想质疑而添加的免责声明、反复否定和复现资格评判。
+- 必要的条件与指标定义在相关位置说明一次；保留数据和技术含义。
+- 用来源标明论文内容；阅读联想集中在 Insights。agent 整理时保留已有思考，新增判断须有作者明确要求。
+- 完成修改后再通读一遍。构建测试与关键词搜索不能替代全文语义审校。
+
 提交前运行 `bash tools/test.sh`。PR 会运行同一检查，只有 `main` 的提交会部署到 GitHub Pages。如使用 `tools/publish.sh`，先用 `git add <明确的文件路径>` 暂存要发布的改动；脚本要求无其他未暂存改动或未跟踪文件，测试通过后提交并推送，不会自动暂存整个仓库。
 
 文章与图片遵循 `LICENSE-Content`，公开声明位于 `/license/`；页脚与文章底部文案由 `_data/locales/zh-CN.yml` 覆盖。`AGENTS.md`、README、测试及原始笔记不进入发布产物。
