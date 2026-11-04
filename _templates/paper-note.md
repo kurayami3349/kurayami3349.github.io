@@ -30,6 +30,8 @@ paper:
      发布前必须使用 .agents/skills/anti-defensive-writing/SKILL.md 审校全文，
      覆盖标题、简介、takeaway、正文和图注；原文摘要作为引用保留。
      agent 整理时保留已有思考，新增判断须有作者明确要求。 -->
+<!-- 发表信息：venue 按会议/期刊官网或作者页面核对，已接收论文注明接收状态。
+     url/pdf 保留实际阅读版本，在参考部分附正式发表或接收信息的来源。 -->
 {% include paper_note_style.html %}
 {% include pdf_embed.html file=page.paper.pdf %}
 

@@ -18,7 +18,7 @@ paper:
   subjects: ["Computer Science - Artificial Intelligence", "Computer Science - Robotics"]
   pdf: "https://arxiv.org/pdf/2502.20900"
   project: "https://dexgraspvla.github.io/"
-  venue: "arXiv:2502.20900"
+  venue: "AAAI 2026"
   takeaway: "提出DexGraspVLA框架，通过VLM规划器+扩散控制器的层级架构，解决开放场景灵巧抓取的泛化难题，在1,287个零样本测试中实现90%+成功率，并展示长时任务执行能力。"
 ---
 
@@ -144,6 +144,8 @@ paper:
 *   **风险**：安全机制需加强（如碰撞检测）\[Appendix E]。
 
 ## 参考与补充
+
+发表信息：AAAI 2026。[来源](https://ojs.aaai.org/index.php/AAAI/article/view/38953)。
 
 本文沿用原笔记中的引用编号，编号、图表与章节均指向[原论文](https://arxiv.org/abs/2502.20900)。
 
