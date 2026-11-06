@@ -1,3 +1,4 @@
+{% include reading_path.html compact=true %}
 {% if page.tags.size > 0 %}
 <nav class="paper-tags" aria-label="笔记标签">
   {% for tag in page.tags %}<a class="post-tag" href="{{ tag | slugify | prepend: '/tags/' | append: '/' | relative_url }}">{{ tag | escape }}</a>{% endfor %}

@@ -28,4 +28,4 @@ Recent commits mostly use short imperative subjects such as `Update blog content
 
 ## Content Licensing
 
-Code is MIT licensed under `LICENSE`; articles and media are covered by `LICENSE-Content`. Confirm reuse rights before adding third-party figures or other media.
+Original code and additions are All Rights Reserved under `LICENSE`; original articles and media are covered by `LICENSE-Content`. Chirpy and retained upstream code remain MIT licensed under `LICENSE-Theme`; other third-party components retain their own licenses. Preserve upstream notices and the licenses of earlier MIT releases. Confirm reuse rights before adding third-party figures or other media.

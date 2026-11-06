@@ -1,3 +1,5 @@
+// Copyright (c) 2026 qq7r. All Rights Reserved. See LICENSE.
+// Generated original figures are covered by LICENSE-Content.
 import fs from 'node:fs';
 import path from 'node:path';
 

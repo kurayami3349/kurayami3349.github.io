@@ -11,6 +11,7 @@ layout:
 tabs:
   # format: <filename_without_extension>: <value>
   home: 首页
+  topics: 主题导读
   categories: 分类
   tags: 标签
   archives: 归档
@@ -30,14 +31,14 @@ panel:
 copyright:
   # Shown at the bottom of the post
   license:
-    template: "本文内容保留所有权利，详见 :LICENSE_NAME。"
-    name: 内容许可
+    template: "本文原创内容保留所有权利，详见 :LICENSE_NAME。"
+    name: 许可与版权
     link: /license/
 
   # Displayed in the footer
-  brief: 保留所有权利。
+  brief: 原创内容与代码保留所有权利。
   verbose: >-
-    文章及图片等非代码内容保留所有权利；转载、改编或使用请参阅内容许可。代码采用 MIT 许可。
+    原创代码、文章与图表等内容保留所有权利；主题及第三方材料遵循各自许可证，详见许可与版权。
 
 meta: 本站采用 :PLATFORM 主题 :THEME
 

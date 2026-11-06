@@ -1,21 +1,35 @@
-MIT License
+原创代码许可声明（All Rights Reserved）
 
-Copyright (c) 2021 Cotes Chung
+版权所有 © 2025–2026 qq7r。保留所有权利。
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+### 适用范围
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+本声明适用于 qq7r 在本仓库中拥有版权的原创代码及原创增补，包括插件、工具脚本、前端交互、样式、模板逻辑、图示生成程序、测试与构建功能。
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+典型位置包括 `_plugins/`、`tools/`、`tests/`、`assets/js/`、`assets/css/`、`assets/notes/`，以及 `_includes/`、`_layouts/` 中的原创实现。目录说明用于定位文件；同一文件中的第三方代码仍按其原有许可证处理。
+
+文章、原创图表、插图、媒体及其他编辑内容适用 `LICENSE-Content`。图示生成程序属于代码，生成的原创图示属于内容，两者分别适用对应声明。
+
+### 使用与授权
+
+允许访问者为浏览本网站，在浏览器中加载、运行代码并进行必要的临时缓存。
+
+除上述浏览用途、法律规定或托管平台服务条款明确允许的行为外，独立复用、复制、修改、分发、再许可或商业使用本声明涵盖的代码，须事先取得作者书面授权。源代码公开可见本身不授予这些权限。
+
+### 主题与第三方代码
+
+Chirpy 主题、其 starter 模板及沿用的上游代码继续适用 MIT 许可，完整版权与许可文本见 `LICENSE-Theme`。包括 `_layouts/home.html`、`_includes/related-posts.html` 在内的主题衍生文件，分别保留上游部分的 MIT 授权和 qq7r 原创增补的版权声明。
+
+第三方依赖、库、工具和引用的代码遵循各自随附的许可证，例如 PDF.js 使用 Apache-2.0。本声明仅涉及 qq7r 有权授权的原创部分。
+
+### 历史版本
+
+此前已经明确以 MIT 发布的代码版本，仍可按对应版本所附的 MIT 条款使用。本声明不撤回此前已授予的许可；当前及后续版本按各版本随附的声明处理。
+
+### 联系
+
+授权申请：mu03cloud9926@163.com
+
+作者：qq7r
+
+网站：https://kurayami3349.github.io

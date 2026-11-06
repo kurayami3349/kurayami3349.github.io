@@ -22,6 +22,7 @@ I am **qq7r**, working at the intersection of vision-language-action models, emb
 - See the full list under `Archives` or browse by `Tags`.
 
 > Licensing
-> - Code: MIT (see `LICENSE`).
-> - Non-code content: All Rights Reserved (see `LICENSE-Content`).
+> - Original code, additions, articles and media: All Rights Reserved.
+> - Chirpy and retained upstream code: MIT. Other third-party materials retain their own licenses.
+> - See [Licensing and copyright]({{ '/license/' | relative_url }}) for scope and historical versions.
 {: .prompt-info }

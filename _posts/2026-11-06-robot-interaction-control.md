@@ -15,6 +15,8 @@ toc: true
 
 <div class="interaction-note" markdown="1">
 
+{% include reading_path.html compact=true %}
+
 本文从质量—弹簧—阻尼模型出发，逐步推导 **PD、重力补偿、逆动力学、力控制、阻抗与导纳控制**，再结合 Franka、UR 和 Flexiv 的接口说明实现方法。
 
 每类控制器按四个层次展开：模型假设、控制律、代入后的闭环动力学，以及实际执行所需的反馈和接口。重点理解控制器如何设计、各项参数怎样影响运动，以及接触力如何进入闭环。

@@ -1,0 +1,25 @@
+{% for topic in site.data.topics %}
+  {% for step in topic.steps %}
+    {% if step.url == page.url %}
+      {% if include.compact %}
+<p class="topic-membership">主题导读：<a href="{{ '/topics/#' | append: topic.id | relative_url }}">{{ topic.title | escape }}</a> · 第 {{ forloop.index }} / {{ topic.steps.size }} 篇</p>
+      {% else %}
+      <nav class="reading-path" aria-label="{{ topic.title | escape }}阅读路径">
+        <h3><a href="{{ '/topics/#' | append: topic.id | relative_url }}">{{ topic.title | escape }}</a></h3>
+        <p>这篇回答：{{ step.question | escape }}</p>
+        <div class="reading-neighbors">
+          {% unless forloop.first %}
+            {% assign previous_index = forloop.index0 | minus: 1 %}
+            {% assign previous_step = topic.steps[previous_index] %}
+            <a href="{{ previous_step.url | relative_url }}"><small>前置阅读 · {{ previous_step.label | escape }}</small>{{ previous_step.question | escape }}</a>
+          {% endunless %}
+          {% unless forloop.last %}
+            {% assign next_step = topic.steps[forloop.index] %}
+            <a href="{{ next_step.url | relative_url }}"><small>接着比较 · {{ next_step.label | escape }}</small>{{ next_step.question | escape }}</a>
+          {% endunless %}
+        </div>
+      </nav>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}

@@ -4,6 +4,7 @@ require "date"
 require "yaml"
 
 errors = []
+published_urls = []
 Dir.glob("_posts/*.md").each do |path|
   match = File.read(path).match(/\A---\s*\n(.*?)\n---\s*\n/m)
   unless match
@@ -14,6 +15,8 @@ Dir.glob("_posts/*.md").each do |path|
     data = YAML.safe_load(match[1], permitted_classes: [Date, Time])
     raise "front matter must be a mapping" unless data.is_a?(Hash)
     next if data["published"] == false
+    slug = data["slug"] || File.basename(path, ".md").sub(/\A\d{4}-\d{2}-\d{2}-/, "")
+    published_urls << (data["permalink"] || "/posts/#{slug}/")
 
     %w[title description].each do |key|
       value = data[key]
@@ -29,5 +32,15 @@ Dir.glob("_posts/*.md").each do |path|
     errors << "#{path}: #{error.message}"
   end
 end
+topics = YAML.safe_load(File.read("_data/topics.yml"))
+topic_ids = topics.map { |topic| topic["id"] }
+errors << "Topic IDs must be unique" unless topic_ids.uniq == topic_ids
+topics.each do |topic|
+  urls = topic.fetch("steps").map { |step| step.fetch("url") }
+  errors << "#{topic['id']}: repeated reading step" unless urls.uniq == urls
+  (urls - published_urls).each do |url|
+    errors << "#{topic['id']}: reading path references an unpublished or missing post: #{url}"
+  end
+end
 abort errors.join("\n") unless errors.empty?
-puts "Published post metadata is complete."
+puts "Published post metadata and topic references are complete."

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 qq7r. All Rights Reserved. See LICENSE.
 (() => {
   const demo = document.querySelector('.interaction-note .contact-demo');
   if (!demo) return;

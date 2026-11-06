@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
-# Copyright (c) 2025 qq7r.
+# Copyright (c) 2025–2026 qq7r. All Rights Reserved.
+# License: see LICENSE. Earlier MIT releases retain their original license.
 """Convert a Markdown paper note into an unpublished Jekyll post, offline.
 
 Relative images must be inside the input note's directory. Existing posts are

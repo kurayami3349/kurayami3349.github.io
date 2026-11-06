@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+# Upstream Chirpy hook: copyright (c) 2021 Cotes Chung, MIT (LICENSE-Theme).
+# Original changes: copyright (c) 2025–2026 qq7r, All Rights Reserved (LICENSE).
 
 require "open3"
 

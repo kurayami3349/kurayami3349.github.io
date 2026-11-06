@@ -1,0 +1,13 @@
+<nav class="browse-notes" aria-label="笔记浏览方式">
+  <div class="browse-links">
+    <a href="{{ '/topics/' | relative_url }}"><strong>主题导读</strong></a>
+    <a href="{{ '/categories/' | relative_url }}">分类</a>
+    <a href="{{ '/tags/' | relative_url }}">标签</a>
+    <a href="{{ '/archives/' | relative_url }}">时间归档</a>
+  </div>
+  <div class="browse-links browse-topics">
+    {% for topic in site.data.topics %}
+    <a href="{{ '/topics/#' | append: topic.id | relative_url }}">{{ topic.title | escape }}</a>
+    {% endfor %}
+  </div>
+</nav>

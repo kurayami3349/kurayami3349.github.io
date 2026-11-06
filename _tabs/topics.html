@@ -1,0 +1,36 @@
+---
+layout: page
+title: topics
+icon: fas fa-route
+order: 0
+---
+
+<p class="topic-intro">按研究问题选一条阅读路径。每篇笔记回答一个具体问题，路径连接控制基础、方法设计和实验判断。</p>
+<nav class="browse-links" aria-label="浏览方式">
+  <a href="{{ '/categories/' | relative_url }}">按内容分类</a>
+  <a href="{{ '/tags/' | relative_url }}">按技术标签</a>
+  <a href="{{ '/archives/' | relative_url }}">按时间归档</a>
+</nav>
+<nav class="topic-overview" aria-label="主题索引">
+  {% for topic in site.data.topics %}
+  <a href="#{{ topic.id }}"><strong>{{ topic.title | escape }}</strong><span>{{ topic.question | escape }}</span></a>
+  {% endfor %}
+</nav>
+{% for topic in site.data.topics %}
+<section class="topic-section" id="{{ topic.id }}" aria-labelledby="topic-{{ topic.id }}">
+  <h2 id="topic-{{ topic.id }}">{{ topic.title | escape }}</h2>
+  <p>{{ topic.description | escape }}</p>
+  <ol class="topic-steps">
+    {% for step in topic.steps %}
+    {% assign note = site.posts | where: 'url', step.url | first %}
+    {% if note %}
+    <li>
+      <a href="{{ note.url | relative_url }}">{{ step.label | escape }}</a>
+      <p>{{ step.question | escape }}</p>
+      <small>{{ note.title | escape }}</small>
+    </li>
+    {% endif %}
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}

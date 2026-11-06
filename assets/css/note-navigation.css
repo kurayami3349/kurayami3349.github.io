@@ -1,0 +1,34 @@
+.browse-notes, .reading-path {
+  border: 1px solid var(--main-border-color);
+  border-radius: .7rem;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.browse-links { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; }
+.browse-topics { margin-top: .7rem; font-size: .9rem; }
+.topic-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+.topic-overview a { border: 1px solid var(--main-border-color); padding: 1.1rem; border-radius: .7rem; }
+.topic-overview strong, .topic-overview span { display: block; }
+.topic-overview span { margin-top: .6rem; color: var(--text-muted-color); font-size: .9rem; }
+.topic-section { scroll-margin-top: 5rem; }
+.topic-steps { padding-left: 1.8rem; }
+.topic-steps li { padding: .75rem 0 .75rem .5rem; border-bottom: 1px solid var(--main-border-color); }
+.topic-steps li::marker { color: var(--text-muted-color); }
+.topic-steps a { font-weight: 600; }
+.topic-steps p { margin: .35rem 0; }
+.topic-steps small, .topic-membership { color: var(--text-muted-color); font-size: .85rem; }
+.topic-membership { margin: 1rem 0; }
+.reading-path { margin-top: 2rem; }
+.reading-path h3 { margin-top: 0; font-size: 1.2rem; }
+.reading-neighbors { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.reading-neighbors a { display: block; border-top: 1px solid var(--main-border-color); padding-top: .75rem; }
+.reading-neighbors small { display: block; margin-bottom: .35rem; color: var(--text-muted-color); }
+#post-list .post-taxonomy { display: flex; flex-wrap: wrap; gap: .4rem .75rem; padding: 0 1.75rem 1.25rem; font-size: .8rem; }
+#post-list .post-taxonomy a { color: var(--link-color); border-bottom: 1px solid var(--main-border-color); }
+/* Keep the theme's hover overlay inside the article link, above the taxonomy row. */
+#post-list .post-preview { position: relative; }
+#post-list .post-preview::before { pointer-events: none; }
+@media (max-width: 700px) {
+  .topic-overview, .reading-neighbors { grid-template-columns: 1fr; }
+  #post-list .post-taxonomy { padding-inline: 1.25rem; }
+}
