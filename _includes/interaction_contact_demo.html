@@ -1,0 +1,19 @@
+<section class="contact-demo" aria-labelledby="contact-demo-title">
+  <h4 id="contact-demo-title">参数实验：刚度与稳态接触力</h4>
+  <p>保持一维接触稳态，改变机器人刚度、环境刚度和目标推进量。两个刚度共同决定最终接触力。</p>
+  <div class="contact-controls">
+    <label for="contact-k">机器人刚度 K <output id="contact-k-value" for="contact-k">500 N/m</output></label>
+    <input id="contact-k" type="range" min="100" max="2000" step="50" value="500">
+    <label for="contact-ke">环境刚度 Kₑ <output id="contact-ke-value" for="contact-ke">500 N/m</output></label>
+    <input id="contact-ke" type="range" min="100" max="10000" step="100" value="500">
+    <label for="contact-delta">目标越过初始表面的距离 <output id="contact-delta-value" for="contact-delta">20 mm</output></label>
+    <input id="contact-delta" type="range" min="0" max="40" step="1" value="20">
+  </div>
+  <dl class="contact-results" aria-live="polite" aria-atomic="true">
+    <div><dt>接触力</dt><dd><output id="contact-force">5.00</output> N</dd></div>
+    <div><dt>环境变形</dt><dd><output id="contact-deformation">10.00</output> mm</dd></div>
+    <div><dt>刚性墙极限下的力</dt><dd><output id="contact-rigid">10.00</output> N</dd></div>
+  </dl>
+  <p class="demo-note">模型：线性弹性环境、接触保持、静态平衡。接触力 F = K Kₑ / (K + Kₑ) × 推进量，环境变形 = F / Kₑ。</p>
+  <noscript>启用 JavaScript 可调整参数；当前显示 K = Kₑ = 500 N/m、推进 20 mm 时的计算结果。</noscript>
+</section>
