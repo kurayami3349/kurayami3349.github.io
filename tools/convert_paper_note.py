@@ -29,14 +29,14 @@ class PaperNoteConverter:
     self.image_base_url = image_base_url or "/img"
 
   def extract_metadata(self, content: str):
-    # Read Zotero's optional Meta Data block; leave unrecognized fields intact.
+    # Import public bibliographic fields; local library links stay in the source note.
     paper, tags = {}, []
     block = re.search(r'^#{1,6}\s+Meta Data\s*\n(?P<body>.*?)(?=^#{1,6}\s|\Z)',
                       content, re.MULTILINE | re.DOTALL | re.IGNORECASE)
     if block:
       fields = {'title': 'title', 'author': 'authors', 'authors': 'authors',
                 'abstract': 'abstract', 'url': 'url', 'doi': 'doi',
-                'local link': 'local', 'venue': 'venue', 'code': 'code',
+                'venue': 'venue', 'code': 'code',
                 'project': 'project', 'pdf': 'pdf', 'arxiv id': 'arxiv'}
       pattern = re.compile(
         r'^[*-] +\*\*(?P<label>[^*]+?)[:：]\*\*[ \t]*(?P<value>.*?)'
@@ -46,13 +46,15 @@ class PaperNoteConverter:
         label = match['label'].lower().strip()
         value = match['value'].strip().strip('\\').strip()
         value = re.sub(r'\n(?:\*\*\*|---)\s*$', '', value).strip()
+        if label == 'local link':
+          return ''
         if label == 'research tags':
           paper['subjects'] = re.findall(r'^\s*[*-] +(.+)', value, re.MULTILINE)
         elif label == 'tags':
           tags.extend(x.strip() for x in re.split(r'[,，]', value) if x.strip())
         elif label in fields:
-          if label in ('url', 'doi', 'local link', 'code', 'project', 'pdf'):
-            link = re.search(r'(?:https?://|zotero://)[^\s<>)]*', value)
+          if label in ('url', 'doi', 'code', 'project', 'pdf'):
+            link = re.search(r'https?://[^\s<>)]*', value)
             value = link[0] if link else value
           paper[fields[label]] = value
         else:

@@ -1,19 +1,42 @@
-<section class="contact-demo" aria-labelledby="contact-demo-title">
-  <h4 id="contact-demo-title">参数实验：刚度与稳态接触力</h4>
-  <p>保持一维接触稳态，改变机器人刚度、环境刚度和目标推进量。两个刚度共同决定最终接触力。</p>
-  <div class="contact-controls">
-    <label for="contact-k">机器人刚度 K <output id="contact-k-value" for="contact-k">500 N/m</output></label>
-    <input id="contact-k" type="range" min="100" max="2000" step="50" value="500">
-    <label for="contact-ke">环境刚度 Kₑ <output id="contact-ke-value" for="contact-ke">500 N/m</output></label>
-    <input id="contact-ke" type="range" min="100" max="10000" step="100" value="500">
-    <label for="contact-delta">目标越过初始表面的距离 <output id="contact-delta-value" for="contact-delta">20 mm</output></label>
-    <input id="contact-delta" type="range" min="0" max="40" step="1" value="20">
-  </div>
-  <dl class="contact-results" aria-live="polite" aria-atomic="true">
-    <div><dt>接触力</dt><dd><output id="contact-force">5.00</output> N</dd></div>
-    <div><dt>环境变形</dt><dd><output id="contact-deformation">10.00</output> mm</dd></div>
-    <div><dt>刚性墙极限下的力</dt><dd><output id="contact-rigid">10.00</output> N</dd></div>
-  </dl>
-  <p class="demo-note">模型：线性弹性环境、接触保持、静态平衡。接触力 F = K Kₑ / (K + Kₑ) × 推进量，环境变形 = F / Kₑ。</p>
-  <noscript>启用 JavaScript 可调整参数；当前显示 K = Kₑ = 500 N/m、推进 20 mm 时的计算结果。</noscript>
+<section id="contact-lab" class="contact-lab" aria-labelledby="contact-lab-title">
+<div class="lab-heading"><h4 id="contact-lab-title">同一块垫子，六种响应</h4><button type="button" data-reset aria-label="重置当前实验">↺ 重置</button></div>
+<div class="lab-presets" role="group" aria-label="选择实验">
+<button type="button" data-case="stiff">① 压入</button>
+<button type="button" data-case="soft" aria-pressed="true">② 变软</button>
+<button type="button" data-case="force">③ 恒力</button>
+<button type="button" data-case="admittance">④ 导纳</button>
+<button type="button" data-case="loss">⑤ 失接触</button>
+<button type="button" data-case="energy">⑥ 耗散</button>
+</div>
+<figure class="lab-fallback"><img src="/img/robot-interaction-control/wiping-scene.svg" alt="擦拭垫压住弹性表面：法向 x 向下，切向沿表面。"><figcaption>K = Kₑ = 500 N/m，平衡点压入 20 mm，稳态接触力 5 N。</figcaption></figure>
+<div class="lab-live" hidden>
+<div class="lab-stage" data-scene></div>
+<div class="lab-playback">
+<button type="button" data-play aria-label="播放或暂停仿真">▶</button>
+<label for="lab-time" class="lab-sr-only">仿真时间</label><input id="lab-time" type="range" min="0" max="6" step="0.005" value="0">
+<output for="lab-time" data-time>0.00 s</output>
+<button type="button" data-speed aria-label="切换播放速度">¼×</button>
+<button type="button" data-surface hidden>撤去表面</button>
+</div>
+<div class="lab-primary" data-primary></div>
+<div class="lab-trace">
+<div class="lab-trace-heading"><div role="group" aria-label="选择曲线"><button type="button" data-view="force">力</button><button type="button" data-view="position">位置</button><button type="button" data-view="energy" hidden>能量</button></div><span data-legend></span></div>
+<div data-plot></div>
+</div>
+<details class="lab-options">
+<summary>更多参数</summary>
+<div class="lab-parameters">
+<label><span data-label="stiffness">刚度 K</span><output data-value="stiffness">500 N/m</output><input data-field="stiffness" type="range" min="0" max="2000" step="50" value="500"></label>
+<label><span data-label="damping">阻尼 B</span><output data-value="damping">80 N·s/m</output><input data-field="damping" type="range" min="5" max="160" step="1" value="80"></label>
+<label><span>环境刚度 Kₑ</span><output data-value="environment">500 N/m</output><input data-field="environment" type="range" min="100" max="5000" step="100" value="500"></label>
+<label><span>前馈／目标力 F_d</span><output data-value="force">0 N</output><input data-field="force" type="range" min="0" max="15" step="0.5" value="0"></label>
+<label><span>平衡点 x₀</span><output data-value="anchor">20 mm</output><input data-field="anchor" type="range" min="0" max="40" step="1" value="20"></label>
+<label data-admittance><span>虚拟质量 M_a</span><output data-value="virtualMass">1 kg</output><input data-field="virtualMass" type="range" min="0.25" max="5" step="0.25" value="1"></label>
+<label data-admittance><span>内环自然频率 f_i</span><output data-value="innerHz">12 Hz</output><input data-field="innerHz" type="range" min="3" max="25" step="1" value="12"></label>
+<label data-admittance><span>力测量延迟 T</span><output data-value="delay">0 ms</output><input data-field="delay" type="range" min="0" max="40" step="1" value="0"></label>
+</div>
+</details>
+<p class="lab-warning" role="status" data-warning hidden>响应超出显示范围，仿真已停止。</p>
+</div>
+<noscript><p>启用 JavaScript 可播放和调参。模型与结果见正文。</p></noscript>
 </section>

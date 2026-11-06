@@ -13,7 +13,6 @@ paper:
   arxiv: "arXiv:2502.20900"
   doi: "https://doi.org/10.48550/arXiv.2502.20900"
   url: "https://arxiv.org/abs/2502.20900"
-  local: "zotero://open-pdf/0_RJ8W45YI"
   abstract: "Dexterous grasping remains a fundamental yet challenging problem in robotics. A general-purpose robot must be capable of grasping diverse objects in arbitrary scenarios. However, existing research typically relies on restrictive assumptions, such as single-object settings or limited environments, leading to constrained generalization. We present DexGraspVLA, a hierarchical framework for general dexterous grasping in cluttered scenes based on RGB image perception and language instructions. It utilizes a pre-trained Vision-Language model as the high-level task planner and learns a diffusion-based policy as the low-level Action controller. The key insight to achieve robust generalization lies in iteratively transforming diverse language and visual inputs into domain-invariant representations via foundation models, where imitation learning can be effectively applied due to the alleviation of domain shift. Notably, our method achieves a 90+% success rate under thousands of unseen object, lighting, and background combinations in a “zero-shot” environment. Empirical analysis confirms the consistency of internal model behavior across environmental variations, thereby validating our design and explaining its generalization performance. DexGraspVLA also demonstrates free-form longhorizon prompt execution, robustness to adversarial objects and human disturbance, and failure recovery, which are rarely achieved simultaneously in prior work. Extended application to nonprehensile object grasping further proves its generality. Code, model, and video are available at dexgraspvla.github.io."
   subjects: ["Computer Science - Artificial Intelligence", "Computer Science - Robotics"]
   pdf: "https://arxiv.org/pdf/2502.20900"
@@ -147,6 +146,6 @@ paper:
 
 发表信息：AAAI 2026。[来源](https://ojs.aaai.org/index.php/AAAI/article/view/38953)。
 
-本文沿用原笔记中的引用编号，编号、图表与章节均指向[原论文](https://arxiv.org/abs/2502.20900)。
+文中的引用编号、图表与章节均对应[原论文](https://arxiv.org/abs/2502.20900)。
 
 </div>

@@ -11,7 +11,7 @@ toc: true
 ---
 
 <link rel="stylesheet" href="/assets/css/interaction-note.css">
-<script src="/assets/js/interaction-note.js" defer></script>
+<script type="module" src="/assets/js/interaction-note.js"></script>
 
 <div class="interaction-note" markdown="1">
 
@@ -19,7 +19,7 @@ toc: true
 
 本文从质量—弹簧—阻尼模型出发，逐步推导 **PD、重力补偿、逆动力学、力控制、阻抗与导纳控制**，再结合 Franka、UR 和 Flexiv 的接口说明实现方法。
 
-每类控制器按四个层次展开：模型假设、控制律、代入后的闭环动力学，以及实际执行所需的反馈和接口。重点理解控制器如何设计、各项参数怎样影响运动，以及接触力如何进入闭环。
+每类控制器按四个层次展开：模型假设、控制律、代入后的闭环动力学，以及实际执行所需的反馈和接口。第三章用同一个“擦拭垫压住表面”的[交互实验](#contact-lab)串起这些概念；进阶推导放在展开项中，概念旁的链接通向教材或官方实现。
 
 <nav class="chapter-nav" aria-label="阅读路线">
 <a href="#ch1"><small>01 · 物理模型</small>力怎样引起运动</a>
@@ -75,6 +75,8 @@ $$
 
 有些库采用相反的排列顺序。对接 SDK 时要同时核对：排列顺序、表达坐标系、力矩参考点、作用力方向。只旋转坐标轴与改变力矩参考点，是两种不同的变换。
 
+这里先把 wrench 理解为“同一参考点处的力和力矩”。坐标变换与功率关系可进一步看 Modern Robotics 的[空间力讲解](https://modernrobotics.northwestern.edu/nu-gm-book-resource/3-4-wrenches/)。
+
 ### 1.3 质量、转动惯量与惯量矩阵
 
 一维质点满足 $$F=ma$$。质量 $$m$$ 描述平动时抵抗加速的程度。绕固定轴的简单刚体满足 $$\tau=I\alpha$$，$$I$$ 是转动惯量，单位为 $$\mathrm{kg\,m^2}$$，与质量如何分布有关。
@@ -86,6 +88,8 @@ T=\frac12\dot q^\top M(q)\dot q.
 $$
 
 $$T$$ 是动能。非对角元素描述关节运动的耦合；伸直手臂与收拢手臂，通常具有不同的惯量分布。对于全旋转关节，$$M$$ 的元素具有转动惯量的单位，整体描述各关节的惯性与耦合。
+
+[惯量矩阵的几何解释](https://modernrobotics.northwestern.edu/nu-gm-book-resource/8-1-3-understanding-the-mass-matrix/)用“沿不同方向施力，产生不同加速度”说明这种姿态依赖。
 
 “虚拟质量 $$M_d$$”是期望交互模型中的参数；“真实惯量 $$M(q)$$”是机器人本体的属性。实现目标惯量需要相应的反馈与动力学补偿。
 
@@ -139,14 +143,14 @@ $$
 **机械阻抗**通常以力与速度之比定义。对上面的线性模型，零初始条件下：
 
 $$
-Z(s)=\frac{F_{\mathrm{ext}}(s)}{\dot\Xi(s)}
+Z(s)=\frac{F_{\mathrm{ext}}(s)}{s\Xi(s)}
 =ms+B+\frac Ks.
 $$
 
 **机械导纳**是相应的速度／力关系：
 
 $$
-Y(s)=\frac{\dot\Xi(s)}{F_{\mathrm{ext}}(s)}
+Y(s)=\frac{s\Xi(s)}{F_{\mathrm{ext}}(s)}
 =\frac1{Z(s)}.
 $$
 
@@ -158,6 +162,8 @@ $$
 $$
 
 这是动态柔顺传递函数，和“速度／力”的导纳差一个 $$s$$。文献有时对这些术语使用得较宽泛，读公式时要先确认输出是位置还是速度。
+
+这里 $$s$$ 是拉普拉斯变量，$$\Xi(s)$$ 是位移 $$\xi(t)$$ 的变换，$$F_{\mathrm{ext}}(s)$$ 是外力的变换；零初始条件下速度的变换为 $$s\Xi(s)$$。初读时可先记住：阻抗描述“运动对应多大力”，导纳描述“力引起怎样的运动”。
 
 **阻抗控制和导纳控制对应不同的实现架构。** 在线性理想模型中，阻抗与导纳互为倒数；实际响应还取决于各自的传感器、内环带宽、延迟和执行器。[R3](#r3)[R4](#r4)[R5](#r5)
 
@@ -191,12 +197,17 @@ $$
 |---|---|---|
 | $$q,\dot q,\ddot q$$ | 实际关节位置、速度、加速度 | 来自实际状态反馈 |
 | $$q_d,\dot q_d,\ddot q_d$$ | 规划／给定轨迹 | 是同一条轨迹的导数 |
-| $$e=q_d-q$$ | 轨迹跟踪误差 | 本文统一“目标减实际” |
+| $$e$$ | 跟踪误差：目标减实际 | 一维为 $$z_d-z$$；关节空间为 $$q_d-q$$ |
 | $$\xi=x-x_0$$ | 阻抗模型相对平衡点的偏移 | 与跟踪误差方向不同，定义会显式写出 |
-| $$x_v,v_v$$ | 导纳内部的虚拟运动状态 | 由内部模型积分得到 |
+| $$x_v,\dot x_v$$ | 导纳内部的完整虚拟位置、速度 | $$\delta x_v$$ 表示叠加到名义轨迹上的修正 |
 | $$K,B$$ | 刚度、阻尼 | $$B$$ 表示耗散，$$C$$ 描述速度相关惯性 |
-| $$\alpha,\beta$$ | 加速度反馈增益 | 与直接产生力的 PD 增益单位不同 |
+| $$k_p,k_d$$ | 一维力输出 PD 的刚度、阻尼增益 | 单位分别为 N/m、N·s/m |
+| $$\alpha,\beta$$；$$\boldsymbol\alpha,\boldsymbol\beta$$ | 一维／多关节的加速度反馈增益 | 单位分别为 s⁻²、s⁻¹ |
+| $$G_x$$ | 运动学层的位置误差到速度的增益 | 单位 s⁻¹；环境刚度另记 $$K_e$$ |
+| $$M_d,B_d,K_d$$；$$M_a,B_a,K_a$$ | 期望阻抗／导纳虚拟模型的参数 | $$K_d$$ 的下标表示 desired；它是刚度，区别于小写 $$k_d$$ |
 | $$J(q)$$ | 接触点／末端雅可比 | 位置、表达坐标系和排列顺序须匹配 |
+
+第二章的一维竖直坐标 $$z$$ 向上；第三章接触例子的 $$x$$ 压入表面为正；第四章的世界 $$+Z$$ 向上。它们对应不同坐标，图中分别标出方向。
 
 ## 第二章　运动学控制、动力学控制与基础控制律
 {: #ch2 }
@@ -223,7 +234,7 @@ $$
 一类运动学跟踪控制器先计算末端速度要求：
 
 $$
-v_{\mathrm{cmd}}=\dot p_d+K_e(p_d-p),
+v_{\mathrm{cmd}}=\dot p_d+G_x(p_d-p),
 $$
 
 再通过雅可比伪逆等方法求关节速度：
@@ -232,7 +243,7 @@ $$
 \dot q_{\mathrm{cmd}}=J^\#v_{\mathrm{cmd}}.
 $$
 
-这一步主要使用几何关系，不直接计算质量、惯性和关节力矩。它假定下层能够足够好地跟踪运动指令。奇异位形、速度限制和冗余关节会影响求解，实际常使用阻尼伪逆或约束优化。
+$$G_x$$ 将位置误差换成速度修正，单位为 $$\mathrm{s^{-1}}$$；$$J^\#$$ 表示相应的伪逆。这个运动学层假定下层能跟踪运动指令。想进一步理解关节速度怎样变成末端速度，可看[空间雅可比的图解](https://modernrobotics.northwestern.edu/nu-gm-book-resource/5-1-1-space-jacobian/)；奇异位形与约束求解留给这一层处理。
 
 ### 2.3 力／力矩层：决定用多大作用力实现运动
 
@@ -350,7 +361,7 @@ $$
 
 **增益的单位变了。** 这里 $$\alpha$$ 的单位为 $$\mathrm{s^{-2}}$$，$$\beta$$ 为 $$\mathrm{s^{-1}}$$；括号内的 PD 项是加速度修正量。等效的力域刚度、阻尼为 $$m\alpha,m\beta$$。如果取 $$\alpha=k_p/m,\beta=k_d/m$$，PD 部分的力与原来相同；新增的 $$m\ddot z_d$$ 是加速度前馈。
 
-**成立条件：** 模型准确、执行器实现所需指令，且外力为零。外力存在时会重新进入误差方程，详见第三章。[R1](#r1)[R6](#r6)
+**成立条件：** 模型准确、执行器实现所需指令，且外力为零。外力存在时会重新进入误差方程，详见第三章。机械臂版本的推导可继续看 [MIT 的控制讲义](https://manipulation.mit.edu/force.html)，软件实现见 [Drake 的逆动力学控制器](https://drake.mit.edu/doxygen_cxx/classdrake_1_1systems_1_1controllers_1_1_inverse_dynamics_controller.html)。
 
 <figure>
 <img src="/img/robot-interaction-control/tracking-response.svg" alt="同样反馈增益下纯PD、重力补偿PD和含加速度前馈控制的轨迹对比" />
@@ -373,6 +384,15 @@ $$
 
 ## 第三章　从一般机械臂到交互控制器实现
 {: #ch3 }
+
+本章始终使用同一个任务：机器人带着一块擦拭垫，接近表面、建立接触，再沿表面往复移动。**法向 $$x$$ 压入表面为正，切向 $$y$$ 沿表面。** 未变形表面位于 $$x_w=0$$，机器人向表面施力的大小为 $$F\ge0$$，环境反力为 $$-F$$。
+
+<figure>
+<img src="/img/robot-interaction-control/wiping-scene.svg" alt="擦拭垫的统一任务坐标：法向 x 压入表面，切向 y 沿表面移动，机器人推力 F 与环境反力相反。">
+<figcaption>图 5：贯穿场景：将机器人在法向上的运动简化为质量 m，将表面简化为单边弹簧 Kₑ。进入接触后 F = Kₑ(x − x_w)；分离时 F = 0。后面的控制器都作用于这一个场景。</figcaption>
+</figure>
+
+阅读路线是“关节力矩怎样作用到垫子 → 接触后控制什么 → 用哪种接口实现 → 表面消失时怎样收尾”。先看关键推导，再用 [六组可交互设置](#contact-lab)比较实际运动与接触力。
 
 ### 3.1 一般机械臂动力学：每一项都是广义力
 
@@ -425,6 +445,11 @@ $$
 
 求和中的 $$i$$ 数的是**接触点**：末端接触桌面、前臂同时被人推动，就需要两个对应点的雅可比。只有一个接触点时无需求和；没有外力时该项为零。六维 wrench 对应六维速度雅可比，二者的坐标和排列必须匹配。
 
+<figure>
+<img src="/img/robot-interaction-control/jacobian-contact.svg" alt="末端一个点力通过不同关节的力臂产生多个关节力矩；功率一致性给出雅可比转置映射。">
+<figcaption>图 6：把公式放回擦拭垫：同一个接触力会影响多个关节。图中只画两个可见关节作示意；完整机械臂仍用对应接触点的 J 计算。</figcaption>
+</figure>
+
 <details markdown="1">
 <summary>为什么是 J 的转置，而不是 J 的逆？</summary>
 <p markdown="span">速度映射来自运动学，力映射来自功率一致性，因此是转置。求逆／伪逆通常用于从末端速度要求求关节速度；那是另一个计算问题。</p>
@@ -432,11 +457,11 @@ $$
 
 ### 3.3 一般情况下的关节轨迹跟踪
 
-无外力时，逆动力学控制可写为：
+将第二章的 $$\alpha,\beta$$ 扩展为 $$n\times n$$ 的增益矩阵 $$\boldsymbol\alpha,\boldsymbol\beta$$，例如各轴独立设置的正对角矩阵。两者分别把关节位置误差、速度误差转为**加速度修正**，单位为 $$\mathrm{s^{-2}}$$、$$\mathrm{s^{-1}}$$。无外力时：
 
 $$
 \ddot q_{\mathrm{cmd}}
-=\ddot q_d+A(q_d-q)+D(\dot q_d-\dot q),
+=\ddot q_d+\boldsymbol\alpha(q_d-q)+\boldsymbol\beta(\dot q_d-\dot q),
 $$
 
 $$
@@ -446,16 +471,18 @@ $$
 若模型准确，得到：
 
 $$
-\ddot e+D\dot e+Ae=0.
+\ddot e+\boldsymbol\beta\dot e+\boldsymbol\alpha e=0.
 $$
 
 外部关节力矩 $$\tau_{\mathrm{ext}}=\sum_iJ_i^\top f^{c_i}$$ 存在时：
 
 $$
-\boxed{\ddot e+D\dot e+Ae=-M^{-1}(q)\tau_{\mathrm{ext}}.}
+\boxed{\ddot e+\boldsymbol\beta\dot e+\boldsymbol\alpha e=-M^{-1}(q)\tau_{\mathrm{ext}}.}
 $$
 
-外力通过 $$-M^{-1}\tau_{\mathrm{ext}}$$ 进入跟踪误差动力学。提高反馈增益会改变接触作用，因此接触任务需要同时规定力—运动目标。
+这两个增益矩阵乘上 $$M(q)$$ 后，才构成力矩域的位置、速度误差反馈项。它们与物理刚度 $$K$$ 的单位和作用层级因此需要分别说明。
+
+对擦拭垫而言，自由运动时能准确跟踪的目标，接触后会受到表面反力。反力通过 $$-M^{-1}\tau_{\mathrm{ext}}$$ 进入误差动力学；若目标继续压向表面，增益越高，通常越强烈地抵抗这种偏移。接下来就要明确：任务希望保持哪个位置、哪种力，或怎样的力—运动关系。
 
 任务空间还满足：
 
@@ -484,6 +511,10 @@ $$
 该式给出力前馈与 PI 反馈的基础结构；动态补偿和接触切换需结合具体系统设计。稳定接触时，积分可帮助克服恒定偏差；接触丢失时需要处理持续力误差与积分状态。
 
 **直接力控制以接触力为目标。** 它可以使用实测力反馈，也可以在模型与准静态条件下通过前馈实现。[R2](#r2)
+
+在擦拭例子里，这对应“法向希望压住 5 N”。交互实验的③使用力前馈加上速度阻尼，稳态时惯性项消失，接触力趋向目标。更一般的力反馈结构可看[直接力控制的教材动画](https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-5-force-control/)。
+
+<a href="#contact-lab" class="lab-jump" data-contact-case="force">试一试③：建立 5 N 接触力，同时沿切向擦拭 →</a>
 
 ### 3.5 间接力控制：指定交互响应，由接触产生力
 
@@ -517,7 +548,17 @@ $$
 
 {% include interaction_contact_demo.html %}
 
-**实现机器人自身的柔顺行为，可以不需要精确环境模型；要预先知道最终接触力，则必须考虑环境，或再用力反馈调整参考。** 上面的环境模型用于预测交互结果。
+<details markdown="1">
+<summary>实验模型与数值方法</summary>
+
+法向 $$+x$$ 压向表面，$$x_w=0$$，单边接触力 $$F=K_e\max(x,0)$$。实际质量 $$m=1\,\mathrm{kg}$$；初始 $$x=x_v=-10\,\mathrm{mm}$$、速度为零。切向 $$y_d=40\sin(\pi t/3)\,\mathrm{mm}$$ 按给定轨迹显示，法向模型省略摩擦与关节耦合。
+
+阻抗与导纳使用 3.9 节的方程。导纳运动内环为 $$u=K_i(x_v-x)+B_i(\dot x_v-\dot x)$$，实际运动满足 $$m\ddot x=u-F$$；$$K_i=m(2\pi f_i)^2$$，$$B_i=2m(2\pi f_i)$$。$$f_i$$ 是内环的无接触自然频率，阻尼比为 1。
+
+曲线采用 RK4、步长 0.5 ms；延迟力按该周期采样并保持。动画中的表面变形和弹簧表示同一个法向接触模型，机械臂轮廓用于说明运动。画面比例随本组轨迹范围调整，右侧刻度给出法向位移；一组回放内比例固定。①–④、⑥默认以 ¼ 倍速回放，⑤以原速回放。改变参数会从同一初始状态重播，曲线与刻度显示仿真时间。
+</details>
+
+先对比①与②：平衡点同样进入表面 20 mm，K 从 2000 降到 500 N/m，环境刚度固定为 500 N/m，稳态力从 8 N 降到 5 N。再改变环境刚度，就能看到同一控制器在不同表面上产生不同的力。这里的环境模型用于预测结果；用力反馈调节参考，则可以直接围绕期望受力设计。
 
 ### 3.6 混合力位控制：在不同方向分配目标
 
@@ -530,11 +571,13 @@ w_{\mathrm{cmd}}^C
 =S_p w_{\mathrm{motion}}^C+S_f w_{\mathrm{force}}^C.
 $$
 
-例如三维平移中，$$S_p=\operatorname{diag}(1,1,0)$$，$$S_f=\operatorname{diag}(0,0,1)$$。运动控制器也输出力，所以相加的量具有相同单位。之后才进行坐标变换与关节映射。
+以接触坐标系第三轴为法向，并按第一章 $$w=[f;\mu]$$ 的六维排列，选择法向力控制时，$$S_f=\operatorname{diag}(0,0,1,0,0,0)$$，$$S_p=I_6-S_f$$。两者均为 $$6\times6$$，与 wrench 维度匹配。这里将法向编排为坐标系 $$C$$ 的第三轴；它对应交互实验中单独记为 $$x$$ 的法向自由度。若只讨论三维平移，就使用三维力 $$f$$ 和相应的 $$3\times3$$ 选择矩阵。
+
+在擦拭例子中，法向负责受力，切向负责移动。两种控制器在这里都先形成同单位的任务 wrench，再进行坐标变换与关节映射。实验③中的切向运动采用给定轨迹，用来直观展示这种分工；摩擦与关节耦合留在真实机器人层面考虑。更完整的几何约束见[混合力位控制动画](https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-6-hybrid-motion-force-control/)。
 
 <figure>
 <img src="/img/robot-interaction-control/hybrid-contact.svg" alt="擦拭表面时沿切向控制轨迹，沿法向控制接触力" />
-<figcaption>图 5：接触坐标系随表面定义。wrench 改变参考点时，需同时处理坐标旋转和参考点平移产生的力矩变化。</figcaption>
+<figcaption>图 7：接触坐标系随表面定义。wrench 改变参考点时，需同时处理坐标旋转和参考点平移产生的力矩变化。</figcaption>
 </figure>
 
 选择矩阵规定各任务方向的控制目标；实际关节动力学、摩擦和曲面几何仍可能耦合这些方向。
@@ -575,6 +618,8 @@ $$
 
 通常随姿态改变。实际响应还包含速度相关项和坐标变换影响。
 
+实验②使用的就是这个基础结构：垫子真实偏离平衡点，就产生弹簧恢复力；真实运动，就产生阻尼力。降低阻尼后播放，可以直接看到接触后的振荡与衰减。
+
 ~~~text
 每个控制周期：
     从实际 q、dq 计算 p、v、J
@@ -598,7 +643,7 @@ $$
 
 ### 3.8 导纳控制器：运行虚拟动力学，再让运动内环执行
 
-令 $$\delta x_v$$ 是相对名义轨迹的虚拟位置修正。基础模型：
+令 $$\delta x_v$$ 是相对名义轨迹的虚拟位置修正，$$\delta v_v=\delta\dot x_v$$。基础模型：
 
 $$
 M_a\delta\ddot x_v+B_a\delta\dot x_v+K_a\delta x_v=f_{\mathrm{ext}},
@@ -613,10 +658,10 @@ $$
 ~~~text
 导纳外环：
     读取并处理外力测量／估计
-    a_v = solve(M_a, f_ext - B_a*v_v - K_a*delta_x_v)
-    v_v       ← v_v       + a_v * dt
-    delta_x_v ← delta_x_v + v_v * dt
-    发送 x_nominal + delta_x_v、相应速度参考
+    a_corr = solve(M_a, f_ext - B_a*delta_v_v - K_a*delta_x_v)
+    delta_v_v ← delta_v_v + a_corr * dt
+    delta_x_v ← delta_x_v + delta_v_v * dt
+    发送 x_nominal + delta_x_v、dot_x_nominal + delta_v_v
 
 运动内环：
     读取实际位置和速度
@@ -628,9 +673,13 @@ $$
 
 **关键区别：** 阻抗的基础弹簧作用由实际运动偏差决定；导纳先生成运动参考，真实状态通过内环追踪。导纳内环可以较硬，整体仍然柔顺，因为它追踪的参考会随外力改变。
 
+实验④以力误差驱动完整参考 $$x_v$$，具体方程见下一节。蓝色虚拟垫子先变化，青色实际垫子由运动内环跟随。拖动内环频率，把 12 Hz 降到 3 Hz，直接看两块垫子怎样拉开距离；下方可切换位置与力曲线。实现中的状态更新可进一步看 [ROS 2 导纳控制器](https://control.ros.org/jazzy/doc/ros2_controllers/admittance_controller/doc/userdoc.html)。
+
+<a href="#contact-lab" class="lab-jump" data-contact-case="admittance">试一试④：把虚拟参考与真实运动分开看 →</a>
+
 <figure>
 <img src="/img/robot-interaction-control/impedance-admittance.svg" alt="阻抗和导纳控制器中实际状态、力反馈、虚拟状态、运动内环的对照" />
-<figcaption>图 6：典型实现结构。外力同时进入测量反馈和机器人的真实动力学。</figcaption>
+<figcaption>图 8：典型实现结构。外力同时进入测量反馈和机器人的真实动力学。</figcaption>
 </figure>
 
 ### 3.9 在同一个混合力位任务中比较
@@ -638,23 +687,23 @@ $$
 只看法向，规定压向表面为正，期望推力 $$F_d$$。带力前馈的基础阻抗为：
 
 $$
-u=F_d-K(z-z_0)-B\dot z.
+u=F_d-K(x-x_0)-B\dot x.
 $$
 
 其实际闭环：
 
 $$
-m\ddot z+B\dot z+K(z-z_0)=F_d-F.
+m\ddot x+B\dot x+K(x-x_0)=F_d-F.
 $$
 
 相应的力误差驱动导纳则在内部运行：
 
 $$
-M_a\ddot z_v+B_a\dot z_v+K_a(z_v-z_0)
+M_a\ddot x_v+B_a\dot x_v+K_a(x_v-x_0)
 =F_d-F_{\mathrm{meas}},
 $$
 
-再由运动内环跟踪 $$z_v$$。这里以**期望推力减实际推力**驱动虚拟模型；按本节符号，$$f_{\mathrm{ext}}=-F$$。
+再由运动内环跟踪 $$x_v$$。这里以**期望推力减实际推力**驱动虚拟模型；按本节符号，$$f_{\mathrm{ext}}=-F$$。
 
 | 实现层面 | 基础阻抗路径 | 导纳路径 |
 |---|---|---|
@@ -664,24 +713,49 @@ $$
 | 可以用哪些反馈 | 位置、速度；更一般实现也可用力 | 外力以及内外环所需的运动状态 |
 | 模型参数如何成为实际表现 | 依赖本体动力学与力矩执行 | 还依赖虚拟模型和运动内环之间的跟踪 |
 
-**保留刚度时，稳态力取决于位置偏移。** 稳态为 $$F=F_d-K(z-z_0)$$。一种基础恒力设计令法向 $$K=0$$，或用力反馈持续调整 $$z_0$$；切向仍可跟踪运动。两者是不同任务方向上的选择。
+**保留刚度时，稳态力取决于位置偏移。** 稳态为 $$F=F_d-K(x-x_0)$$。一种基础恒力设计令法向 $$K=0$$，或用力反馈持续调整 $$x_0$$；切向仍可跟踪运动。两者是不同任务方向上的选择。
 
-### 3.10 自由空间中的导纳响应
+### 3.10 擦到边缘之后：自由空间中的导纳响应
+{: #contact-loss }
 
-假设零偏与工具重力已正确处理，且确实无其他外力，则 $$F_{\mathrm{meas}}\approx0$$。固定 $$z_0$$、$$M_a>0,B_a>0$$ 时：
+现在让同一块表面在第 3 秒消失，代表擦拭垫移出工件边缘。接触力随之变成零，但控制器还保留着“压住 5 N”的目标。这时查看实验⑤，就能理解为什么法向参考还会继续移动。
 
-| 设置 | 虚拟模型的无接触行为 |
-|---|---|
-| $$F_d=0,K_a>0$$ | 位置逐渐回到 $$z_0$$ |
-| $$F_d=0,K_a=0$$ | 速度衰减，位置停在与初始状态有关的位置 |
-| $$F_d\ne0,K_a=0$$ | 速度趋于 $$F_d/B_a$$，参考位置持续移动 |
-| $$F_d\ne0,K_a>0$$ | 虚拟位置趋向 $$z_0+F_d/K_a$$；实际接触力保持为零 |
+<a href="#contact-lab" class="lab-jump" data-contact-case="loss">试一试⑤：在 3 秒前后拖动时间，观察 F 与 x_v →</a>
 
-运动内环始终可以工作。若外环叠加在名义轨迹上，修正量为零时机器人仍正常跟踪名义轨迹。
+本节沿用上一节的力误差驱动模型，工具重力与传感零偏已处理。无接触时 $$F_{\mathrm{meas}}=0$$，于是：
 
-零刚度时持续的力偏置会变成运动漂移。接触丢失后，任务逻辑决定继续搜索、保持、退出或切换目标。
+$$
+M_a\ddot x_v+B_a\dot x_v+K_a(x_v-x_0)=F_d.
+$$
+
+**先看零刚度。** 当 $$K_a=0$$，目标力持续驱动虚拟质量，阻尼逐渐平衡它。默认的 $$F_d=5\,\mathrm N$$、$$B_a=80\,\mathrm{N\,s/m}$$ 对应最终速度 $$F_d/B_a=62.5\,\mathrm{mm/s}$$。蓝色虚拟垫子继续向下，青色实际垫子在内环作用下跟随；力箭头消失，接触力保持为零。
+
+**再加入弹簧。** 保持实验⑤，将 $$K_a$$ 调到 500 N/m。固定 $$x_0=0$$ 时，虚拟位置趋向 $$F_d/K_a=10\,\mathrm{mm}$$；这里的弹簧是在把参考拉回某个位置，表面仍然已经撤去。
+
+| 选择 | 无接触时的长期行为 | 例子里的含义 |
+|---|---|---|
+| $$F_d=0,K_a>0$$ | $$x_v\to x_0$$ | 回到虚拟平衡点 |
+| $$F_d=0,K_a=0$$ | 速度衰减，位置由初始状态决定 | 停在当前位置附近 |
+| $$F_d\ne0,K_a=0$$ | $$\dot x_v\to F_d/B_a$$ | 持续向接触方向搜索 |
+| $$F_d\ne0,K_a>0$$ | $$x_v\to x_0+F_d/K_a$$ | 移到一个新的虚拟平衡点 |
+
+这四种行为都由同一方程给出。真实任务在检测到接触丢失后，会选择继续搜索、保持、卸载或重新接近；这个选择交给[第四章的任务状态机](#contact-state-machine)。导纳模型负责生成响应，任务逻辑负责决定此刻需要哪种响应。
+
+<details markdown="1">
+<summary>进一步看：零刚度时，速度怎样从当前值走向 F_d/B_a？</summary>
+
+令接触丢失时刻为 $$t_c$$，当 $$K_a=0$$ 且 $$F_d,B_a$$ 为常数：
+
+$$
+\dot x_v(t)=\frac{F_d}{B_a}+\left(\dot x_v(t_c)-\frac{F_d}{B_a}\right)e^{-B_a(t-t_c)/M_a}.
+$$
+
+<p markdown="span">$$M_a/B_a$$ 是速度响应的时间常数。持续的力测量偏置也会进入同一个驱动项，因而零偏会变成可积累的位置漂移。</p>
+</details>
 
 ### 3.11 实现细节：公式之外，哪些量最容易用错？
+
+实验④已经区分了蓝色参考与青色实际位置。真实实现还要逐层解释“这两条线为什么分开”，以下六项就是沿这条链路检查的信息。
 
 1. **状态与时间戳：** 力、位姿和速度应对应尽可能一致的时刻；分别记录外环与内环的更新周期。
 2. **力信号：** 零偏、工具重力、工具运动惯性、参考点和坐标变换需要分别处理。滤波减少噪声，也会引入相位滞后。
@@ -709,6 +783,15 @@ $$
 
 ### 3.13 为什么会讨论无源性？
 
+再回到同一擦拭垫，选择⑥。固定平衡点、关闭力前馈后，初始偏差中储存的能量会在运动、机器人虚拟弹簧和环境弹簧之间转移；阻尼持续消耗能量。画面下方的紫色储能条逐渐缩短，橙色累计耗散条增长。能量曲线中，两者之和近似保持水平。
+
+<a href="#contact-lab" class="lab-jump" data-contact-case="energy">试一试⑥：降低阻尼，比较振荡与能量衰减 →</a>
+
+这种“储能从哪里来、又到哪里去”的检查，是[无源性分析](https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2020.590681/full)的入口。初读时把握这条能量线索即可；对具体机器人作稳定性判断，还需计入参考变化、采样和时延。
+
+<details markdown="1">
+<summary>进一步看：阻抗模型的能量收支</summary>
+
 固定 $$x_0$$、常数 $$m,K>0,B>0$$ 时，理想阻抗系统储能：
 
 $$
@@ -722,6 +805,9 @@ $$
 外界通过功率端口输入能量，阻尼消耗能量。在满足无源互联条件时，这种能量分析可用于证明稳定性；渐近收敛还需要相应的耗散性或可检测性条件。
 
 移动平衡点、时变刚度、采样和延迟都可能改变能量交换。例如固定 $$K$$、移动 $$x_0$$ 会在储能导数中引入 $$-K(x-x_0)\dot x_0$$。因此实际系统的无源性要对完整实现分析。[R5](#r5)[R9](#r9)
+
+<p markdown="span">实验⑥还计入环境弹簧的势能 $$K_e\max(x,0)^2/2$$。固定表面下，接触双方交换的功率相消，得到 $$\dot E_{\mathrm{tot}}=-B\dot x^2$$。橙色虚线展示的就是 $$E_{\mathrm{tot}}+\int B\dot x^2dt$$。</p>
+</details>
 
 <details markdown="1">
 <summary>自测：为什么导纳内环很硬，外部推起来仍然可以很软？</summary>
@@ -750,22 +836,16 @@ $$
 **理论控制力矩进入 API 前，要扣除接口已负责的补偿项。** 例如机器人内部已补偿重力时，用户指令应按该接口约定处理 $$g$$。
 
 ### 4.2 共用任务：沿表面移动并保持法向接触
+{: #contact-state-machine }
 
 设计目标：在接触坐标系中，切向沿 $$p_t(t)$$ 移动，法向保持推力 $$F_n$$。$$F_n$$ 根据任务、工具与接触材料设定。
 
-推荐把任务流程显式表示为：
+这是第三章擦拭任务在真实机器人上的延续。此处用接触坐标系描述任务，并在各平台例子中明确它与世界坐标系的关系。
 
-~~~text
-准备与状态确认
-    ↓
-运动控制接近表面
-    ↓  接触条件满足
-平滑建立力目标与交互参数
-    ↓
-切向轨迹 + 法向交互控制
-    ↓  任务完成／接触丢失／执行受限
-平滑卸载、保持或重新接近
-~~~
+<figure>
+<img src="/img/robot-interaction-control/contact-states.svg" alt="接近表面、平滑建立接触、沿表面擦拭，然后按任务完成或接触丢失选择卸载保持或重新接近。">
+<figcaption>图 9：任务状态机把 3.10 的自由空间响应接回完整任务：失去表面后，先决定下一阶段的目标，再让交互控制器执行。</figcaption>
+</figure>
 
 任务状态机管理阶段切换，高频控制器持续计算执行指令。接触判据综合力信号、持续时间和运动状态，以区分稳定接触与噪声尖峰。
 
@@ -777,14 +857,19 @@ $$
 
 官方 <code>cartesian_impedance_control.cpp</code> 采用实际位姿误差、雅可比和关节速度计算弹簧阻尼力矩，再加入科氏向量；它明确说明不进行惯量整形。[R7](#r7)
 
-**教学设计：固定末端平衡位姿。** 为对应官方示例，这里把六维误差 $$e_6$$ 定义为“实际相对目标的偏移”：平移部分为 $$p-p_d$$，旋转部分为一致坐标系下、与恢复力矩符号匹配的局部姿态误差。它与前文跟踪误差 $$e=q_d-q$$ 的方向不同，因此下面使用负号。令 $$V=J\dot q$$，控制结构为：
+**教学设计：固定末端平衡位姿。** 为对应官方示例，这里用 $$\delta x_6$$ 表示“实际相对目标的六维偏移”：平移部分为 $$p-p_d$$，旋转部分为同一坐标系下、与恢复力矩符号匹配的局部姿态误差。这个偏移与第一章的 $$\xi=x-x_0$$ 同方向，恢复作用使用负号。令 $$V=J\dot q$$，控制结构为：
 
 $$
 \tau_{\mathrm{user}}
-=c(q,\dot q)-J^\top(K_6e_6+B_6V).
+=c(q,\dot q)-J^\top(K_6\delta x_6+B_6V).
 $$
 
 所用 FCI 接口在机器人内部补偿重力，因此用户力矩式保留科氏补偿与弹簧阻尼项。
+
+<figure>
+<img src="/img/robot-interaction-control/franka-interface.svg" alt="Franka 用户侧以实际状态和模型计算弹簧阻尼任务力矩，FCI 传给机器人，机器人内部处理接口约定的重力与摩擦补偿。">
+<figcaption>图 10：Franka 的接口示意：本例的弹簧阻尼计算放在用户侧。机械臂轮廓为功能示意，命令与补偿边界依据官方 libfranka Overview 和笛卡尔阻抗示例 <a href="#r7">R7</a>、<a href="#r10">R10</a>。</figcaption>
+</figure>
 
 ~~~text
 初始化：
@@ -795,8 +880,8 @@ $$
 FCI 控制回调：
     读取 q、dq、末端位姿
     取得模型 coriolis 向量与末端 Jacobian
-    计算同一表达坐标系中的 e6 和 V
-    tau_user = coriolis - J.T * (K6*e6 + B6*V)
+    计算同一表达坐标系中的 delta_x6 和 V
+    tau_user = coriolis - J.T * (K6*delta_x6 + B6*V)
     应用与接口一致的指令幅值／变化率约束
     返回用户力矩
 ~~~
@@ -806,6 +891,10 @@ FCI 控制回调：
 **扩展到表面任务。** 切向保留轨迹跟踪，法向可使用较低刚度并加入目标力前馈；如果要求消除稳态力偏差，再用外层力反馈缓慢调整法向平衡点。力反馈外环、基础阻抗与“完整惯量整形”是三个可分别选择的设计环节。
 
 **怎样验证行为。** 固定参考后施加小的准静态外力，检查位移与力的斜率；动态推动时观察速度、恢复过程和振荡；换姿态后重复，检查真实有效惯量与补偿误差的变化。用实测曲线评估设置的 $$K,B$$ 在不同姿态下产生的响应。
+
+<aside class="robot-media" markdown="1">
+**看实机与实现。** [Franka 官方示例说明](https://frankarobotics.github.io/docs/doc/franka_ros2_jazzy/franka_example_controllers/doc/index.html#cartesian-impedance-example)说明如何在线更新平衡位姿与刚度；[Matthias Mayr 的 ROSCon 演示](https://www.youtube.com/watch?v=YtnQLyA7_og)及其[原作者项目](https://github.com/matthias-mayr/Cartesian-Impedance-Controller)展示了用于 Franka 与 KUKA 的笛卡尔阻抗实现。观看时对照三个量：参考位姿、实际位姿、刚度设置。
+</aside>
 
 ### 4.4 Franka 上也可以实现导纳
 
@@ -835,6 +924,11 @@ URScript 的 <code>force_mode(task_frame, selection_vector, wrench, type, limits
 
 **设计例子：任务坐标系 $$+Z$$ 指向离开表面方向。** 向表面压的机器人作用力为负 $$Z$$，法向选择向量为 $$[0,0,1,0,0,0]$$。概念调用为：
 
+<figure>
+<img src="/img/robot-interaction-control/ur-interface.svg" alt="UR 内置 force_mode 选择法向为力控轴；世界 Z 向上时，机器人向下压 5 N，对环境的目标力分量为负 5 N。">
+<figcaption>图 11：UR 的参数如何对应同一块擦拭垫：法向力目标交给内置模式，切向轨迹由运动程序提供。图示说明公开接口语义，依据 PolyScope 5.22 文档 <a href="#r11">R11</a>。</figcaption>
+</figure>
+
 ~~~text
 force_mode(
     task_frame,
@@ -848,6 +942,10 @@ force_mode(
 这个调用展示法向力模式的参数配置。切向运动由配套运动程序规定，法向由内置力模式调整；具体并发方式和运动命令组合应遵循同版本官方示例。
 
 这个模式提供法向力控制与其他方向运动控制。这里依据公开 API 描述参数和外部行为，内部控制算法未公开。
+
+<aside class="robot-media" markdown="1">
+**看真实运动。** UR 官方[沿指定方向运动并保持力顺应的教程](https://www.universal-robots.com/articles/ur/programming/force-mode-performing-motion-using-the-force-mode-compliant-in-a-specific-feature-and-direction/)附有程序截图和[实机演示视频](https://s3-eu-west-1.amazonaws.com/ur-support-site/240480/force_mode_example.mp4)。重点看末端遇到表面后怎样偏离纯几何路径，以及未选为力控的方向怎样继续运动。教程用自己的线特征坐标系，阅读时把其中的坐标轴映射到本节的任务坐标系。
+</aside>
 
 ### 4.6 UR：自定义导纳与直接力矩是不同路径
 
@@ -882,6 +980,11 @@ RDK 2.1 中，<code>SetForceControlAxis</code>、<code>SetForceControlFrame</cod
 
 **目标 wrench 的方向。** 所引 Flexiv API 将目标 wrench 定义为 **TCP 感受到的力**。例如世界 $$+Z$$ 向上时，指定感受到 $$+5\,\mathrm N$$，会使机器人向 $$-Z$$ 方向建立接触。它与 UR 所引 <code>wrench</code> 参数的“机器人施加给环境”定义相反。[R11](#r11)[R16](#r16)
 
+<figure>
+<img src="/img/robot-interaction-control/flexiv-interface.svg" alt="Flexiv 所引 RDK 将目标 wrench 定义为 TCP 感受到的力；世界 Z 向上时，目标正 5 N 对应机器人向下压表面。">
+<figcaption>图 12：Flexiv 与 UR 压的是同一块表面，但 API 选择了作用力对中的另一侧。先确认“谁对谁施力”，再填入数值。图示依据所引 RDK 1.9/2.1 接口 <a href="#r15">R15</a>–<a href="#r17">R17</a>。</figcaption>
+</figure>
+
 | 同一物理目标：沿世界 $$-Z$$ 压表面 | 参数中的示意 $$F_z$$ |
 |---|---|
 | UR：机器人作用于环境 | $$-F_n$$ |
@@ -892,6 +995,10 @@ RDK 2.1 中，<code>SetForceControlAxis</code>、<code>SetForceControlFrame</cod
 **Active / passive force control 的厂商语义。** RDK 2.1 的 <code>SetPassiveForceControl</code> 区分目标 wrench 前馈与带测量反馈的力控制。这里的 passive 是 API 的前馈模式名称；数学意义的无源性仍需分析完整系统的能量交换。[R16](#r16)
 
 **自定义控制入口。** 也可以使用低层关节力矩模式自行设计控制器。RDK 1.9 的 <code>StreamJointTorque</code> 有 <code>enable_gravity_comp</code> 参数，默认开启。实际代码应按具体版本和模式明确每项补偿的归属。[R17](#r17)
+
+<aside class="robot-media" markdown="1">
+**看表面变化时的行为。** Flexiv 官方[打磨应用演示页](https://flexiv.com/story/polish)包含轨迹学习、曲面跟随、混合运动—力控制与外部扰动的动态图；可以直接打开[曲面跟随演示](https://oss-flexiv-web-com.flexiv.com/image/story/polish/advantage-ground-2-children-1.gif)。重点看工具怎样持续接触曲面，同时改变位置与姿态；再对应本节的力轴、力参考系与运动目标。
+</aside>
 
 ### 4.8 三个平台最值得记住的差别
 
@@ -950,7 +1057,7 @@ RDK 2.1 中，<code>SetForceControlAxis</code>、<code>SetForceControlFrame</cod
 
 | 用途 | 公式 | 主要假设 |
 |---|---|---|
-| 运动学速度控制 | $$\dot q_{\mathrm{cmd}}=J^\#(\dot p_d+K_e(p_d-p))$$ | 下层可跟踪，需处理奇异与约束 |
+| 运动学速度控制 | $$\dot q_{\mathrm{cmd}}=J^\#(\dot p_d+G_x(p_d-p))$$ | 下层可跟踪，需处理奇异与约束 |
 | PD | $$u=K_Pe+K_D\dot e$$ | 输出单位按应用定义 |
 | 重力补偿＋PD | $$u=mg+k_pe+k_d\dot e$$ | 一维竖直质点 |
 | 加速度前馈 | $$u=mg+m(\ddot z_d+\alpha e+\beta\dot e)$$ | 模型与执行准确 |
@@ -958,7 +1065,7 @@ RDK 2.1 中，<code>SetForceControlAxis</code>、<code>SetForceControlFrame</cod
 | 简单力前馈 | $$u=F_d,\ F=F_d-m\ddot x$$ | 推墙方向为正，重力已补偿 |
 | 基础阻抗 | $$m\ddot\xi+B\dot\xi+K\xi=f_{\mathrm{ext}}$$ | 固定平衡点，保留真实质量 |
 | 基础导纳 | $$M_a\delta\ddot x_v+B_a\delta\dot x_v+K_a\delta x_v=f_{\mathrm{ext}}$$ | 生成虚拟参考，另有运动内环 |
-| 力误差驱动导纳 | $$M_a\ddot z_v+B_a\dot z_v+K_a(z_v-z_0)=F_d-F$$ | 力方向定义与上一行不同 |
+| 力误差驱动导纳 | $$M_a\ddot x_v+B_a\dot x_v+K_a(x_v-x_0)=F_d-F$$ | 力方向定义与上一行不同 |
 | 混合方向选择 | $$w^C=S_pw_p^C+S_fw_f^C$$ | 同一参考系、参考点和分量顺序 |
 
 ### 五个自测题
@@ -1071,14 +1178,12 @@ RDK 2.1 中，<code>SetForceControlAxis</code>、<code>SetForceControlFrame</cod
 
 
 
-### 图示与写作参考
+### 图示与阅读参考
 
-六张图示来自本笔记附件中的原创绘图脚本；两组响应曲线按理想模型数值积分生成。[下载图示生成脚本](/assets/notes/robot-interaction-control/figures.mjs)，可复算参数与曲线。将脚本保存为 `figures.mjs` 后，在同目录运行：
+文中十二张图示均为原创：六张基础图解与数值响应图，以及六张场景、任务流程和机器人接口示意图。两组静态响应曲线与交互实验按文中模型数值积分生成，参数与方法见相应图注和实验说明。
 
-~~~bash
-node --input-type=module -e "import { buildFigures } from './figures.mjs'; console.log(buildFigures(process.cwd()));"
-~~~
+第四章的机器人轮廓为功能示意。实机视频与动态图链接至 Franka 官方资料、Matthias Mayr 的项目演示、UR 官方教程和 Flexiv 官方应用页；这些第三方媒体的权利归原作者或相应厂商所有。
 
-文章组织参考 Distill 的 [Why Momentum Really Works](https://distill.pub/2017/momentum/) 与 Red Blob Games 的 [Introduction to the A* Algorithm](https://www.redblobgames.com/pathfinding/a-star/introduction.html)：围绕简单模型展开推导，把图解和可调参数例子放在相关论证旁。
+交互式讲解还可参考 Distill 的 [Why Momentum Really Works](https://distill.pub/2017/momentum/) 与 Red Blob Games 的 [Introduction to the A* Algorithm](https://www.redblobgames.com/pathfinding/a-star/introduction.html)。
 
 </div>

@@ -20,6 +20,7 @@ while (($#)); do
 done
 
 python3 -m unittest discover -s tests -v
+node tests/check_interaction_note.cjs
 bundle exec ruby tools/check_content.rb
 JEKYLL_ENV=production bundle exec jekyll build --destination _site --config "$config"
 python3 tools/check_site.py _site

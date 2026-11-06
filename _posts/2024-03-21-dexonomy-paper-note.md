@@ -70,6 +70,6 @@ Dexonomy 将抓取分类体系引入数据合成，以抓取类型作为条件�
 
 发表信息：RSS 2025。[来源](https://www.roboticsproceedings.org/rss21/p105.html)。
 
-本文沿用原笔记中的引用编号，编号、图表与章节均指向[原论文](https://arxiv.org/abs/2504.18829)。
+文中的引用编号、图表与章节均对应[原论文](https://arxiv.org/abs/2504.18829)。
 
 </div>

@@ -127,6 +127,7 @@ class ConverterTests(unittest.TestCase):
 - **ArXiv id:** arXiv:2608.30880
 - **DOI:** [10.48550/arXiv.2608.30880](https://doi.org/10.48550/arXiv.2608.30880)
 - **URL:** [http://arxiv.org/abs/2608.30880](http://arxiv.org/abs/2608.30880)
+- **Local Link:** [Local PDF](zotero://open-pdf/library/items/LOCALPDF)
 - **Abstract:** Generalizable manipulation remains difficult.
 - **Research Tags:**
   - Computer Science - Robotics
@@ -147,6 +148,10 @@ Keep this paragraph.
     self.assertIn('## 1. 问题与背景', post)
     self.assertIn('Keep this paragraph.', post)
     self.assertNotIn('### Meta Data', post)
+    self.assertNotIn('Local Link', post)
+    self.assertNotIn('zotero://', post)
+    self.assertNotIn('  local:', post)
+    self.assertIn('zotero://open-pdf/library/items/LOCALPDF', self.note.read_text())
 
   def test_attachment_figure_caption_and_unknown_metadata_are_preserved(self):
     (self.raw / 'attachments').mkdir()

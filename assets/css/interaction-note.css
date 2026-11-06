@@ -30,7 +30,7 @@ body:has(.interaction-note) article > header h1 { text-wrap: balance; }
   font-size: .95rem;
 }
 .interaction-note .chapter-nav small { display: block; color: var(--note-accent); }
-.interaction-note :is(.callout, .contact-demo) {
+.interaction-note .callout {
   margin: 1.8rem 0;
   padding: 1.2rem 1.4rem;
   border-left: 3px solid var(--note-accent);
@@ -64,22 +64,110 @@ body:has(.interaction-note) article > header h1 { text-wrap: balance; }
 .interaction-note mjx-container[display='true'] {
   max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: .5rem;
 }
-.interaction-note .contact-demo h4 { margin: 0 0 .8rem; }
-.interaction-note .contact-controls { display: grid; gap: .35rem; }
-.interaction-note .contact-controls label { display: flex; justify-content: space-between; gap: 1rem; font-size: .9rem; }
 .interaction-note input[type='range'] { width: 100%; accent-color: var(--note-accent); margin-bottom: .8rem; }
-.interaction-note .contact-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; margin: 1.1rem 0; }
-.interaction-note .contact-results dt { font-size: .75rem; font-weight: 400; }
-.interaction-note .contact-results dd { margin: 0; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
-.interaction-note .demo-note { font-size: .8rem; margin-bottom: 0; }
 .interaction-note :focus-visible { outline: 2px solid var(--note-accent); outline-offset: 3px; }
 @media (max-width: 600px) {
   .interaction-note { font-size: 1rem; line-height: 1.85; }
   .interaction-note .chapter-nav { grid-template-columns: 1fr; }
-  .interaction-note :is(.callout, .contact-demo) { padding: 1rem; }
-  .interaction-note .contact-results { grid-template-columns: 1fr; }
+  .interaction-note .callout { padding: 1rem; }
 }
 @media print {
-  .interaction-note .chapter-nav, .interaction-note .contact-controls { display: none; }
+  .interaction-note .chapter-nav { display: none; }
   .interaction-note details { break-inside: avoid; }
+}
+
+/* The scene leads; a single control and trace follow the active experiment. */
+.interaction-note .contact-lab {
+  --lab-actual: #087f8c;
+  --lab-reference: #466bd0;
+  --lab-force: #b44c2a;
+  --lab-energy: #8056b0;
+  --lab-heat: #ac641c;
+  margin: 2rem 0;
+  padding: .85rem;
+  border: 1px solid var(--note-rule);
+  border-radius: .65rem;
+  background: var(--card-bg, #fff);
+  line-height: 1.5;
+}
+html[data-mode='dark'] .contact-lab {
+  --lab-actual: #53c7c8;
+  --lab-reference: #99b5ff;
+  --lab-force: #ffac7f;
+  --lab-energy: #cba6f7;
+  --lab-heat: #e5b166;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-mode='light']) .contact-lab {
+    --lab-actual: #53c7c8;
+    --lab-reference: #99b5ff;
+    --lab-force: #ffac7f;
+    --lab-energy: #cba6f7;
+    --lab-heat: #e5b166;
+  }
+}
+.contact-lab [hidden] { display: none !important; }
+.contact-lab:not(.lab-ready) :is(.lab-presets, [data-reset]) { display: none; }
+.lab-heading { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+.interaction-note .lab-heading h4 { margin: 0; font-size: 1rem; }
+.contact-lab button {
+  padding: .4rem .55rem;
+  border: 1px solid var(--note-rule);
+  border-radius: .35rem;
+  background: var(--main-bg, #fff);
+  color: var(--text-color);
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+  min-height: 36px;
+}
+.contact-lab button[aria-pressed='true'] { background: #087f8c; color: #fff; border-color: #087f8c; }
+.lab-presets { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .3rem; }
+.lab-stage { margin: .4rem 0; border-radius: .4rem; background: var(--main-bg, #fff); }
+.contact-lab svg { display: block; width: 100%; height: auto; overflow: hidden; }
+.contact-lab svg text { font: 19px system-ui, sans-serif; }
+.contact-lab svg text:not([fill]) { fill: var(--text-color); }
+.contact-lab svg .lab-big-number { font-size: 34px; font-weight: 650; fill: var(--lab-force); font-variant-numeric: tabular-nums; }
+.contact-lab svg .lab-unit { font-size: 19px; font-weight: 400; }
+.contact-lab svg .lab-small { font-size: 17px; }
+.contact-lab svg .lab-scene-caption { font-size: 19px; font-weight: 550; }
+.contact-lab .lab-arm { stroke: #8d9ca8; stroke-width: 19; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.contact-lab .lab-joint { stroke: #8d9ca8; stroke-width: 4; fill: var(--main-bg, #fff); }
+.contact-lab .lab-surface { fill: var(--lab-actual); fill-opacity: .10; stroke: var(--lab-actual); stroke-opacity: .5; stroke-width: 1.5; }
+.contact-lab .lab-spring { stroke: var(--lab-actual); stroke-opacity: .5; stroke-width: 2; fill: none; }
+.contact-lab .lab-ghost { stroke: var(--lab-reference); stroke-width: 2; stroke-dasharray: 5 3; fill: var(--lab-reference); fill-opacity: .10; }
+.contact-lab .lab-zero-line { stroke: var(--text-muted-color); stroke-width: 1; stroke-dasharray: 3 5; fill: none; opacity: .5; }
+.contact-lab .lab-ruler { stroke: var(--text-muted-color); stroke-width: 1; fill: none; }
+.lab-playback { display: flex; align-items: center; gap: .45rem; }
+.lab-playback input { flex: 1; min-width: 40px; margin: 0 !important; }
+.lab-playback output { font: .75rem system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lab-playback button { flex-shrink: 0; }
+.lab-primary { margin: .7rem 0 .3rem; }
+.lab-primary label, .lab-parameters label { display: block; font-size: .85rem; margin-bottom: 0; }
+.lab-primary output, .lab-parameters output { float: right; font-variant-numeric: tabular-nums; }
+.lab-primary input, .lab-parameters input { display: block; margin: .4rem 0 .5rem !important; }
+.lab-trace { border-top: 1px solid var(--note-rule); padding-top: .4rem; }
+.lab-trace-heading { display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
+.lab-trace-heading button { min-height: 28px; padding: .15rem .45rem; font-size: .75rem; }
+.lab-trace-heading [data-legend] { font-size: .7rem; }
+.lab-trace-heading [data-legend] span { white-space: nowrap; }
+.contact-lab .plot-grid { stroke: var(--note-rule); stroke-width: 1; fill: none; }
+.contact-lab .plot-cursor { stroke: var(--text-muted-color); stroke-width: 1; stroke-dasharray: 3 3; fill: none; }
+.interaction-note .lab-options { border: 0; border-top: 1px solid var(--note-rule); border-radius: 0; padding: .5rem 0 0; margin: .2rem 0 0; }
+.lab-options summary { font-size: .8rem; font-weight: 400; color: var(--text-muted-color); }
+.lab-parameters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem 1.2rem; }
+.lab-warning { font-size: .85rem; color: var(--lab-force); margin: .5rem 0 0; }
+.lab-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.interaction-note .lab-jump { display: inline-block; margin: .25rem 0 1rem; font-size: .9rem; }
+.interaction-note .robot-media { margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--note-rule); border-radius: .5rem; }
+.interaction-note .robot-media p:last-child { margin-bottom: 0; }
+@media (max-width: 600px) {
+  .interaction-note .contact-lab { padding: .65rem; }
+  .lab-presets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lab-parameters { grid-template-columns: 1fr; }
+  .contact-lab svg .lab-small { font-size: 18px; }
+}
+@media print {
+  .contact-lab .lab-live, .lab-presets, [data-reset] { display: none; }
+  .contact-lab .lab-fallback[hidden] { display: block !important; }
 }
