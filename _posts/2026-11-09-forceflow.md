@@ -59,7 +59,10 @@ paper:
 
 ### 力走调制，视觉走上下文
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2605.11048v2#page=4">查看原图</a> · <strong>原文 Fig. 2 · 两种模态进入网络的方式不同。</strong> 力／本体条件调制动作特征，视觉提供可选择读取的上下文；执行接口按 §3.3 读取其中的运动分量。来源：arXiv:2605.11048v2，PDF p. 4。</p>
+<figure>
+  <img src="/img/arxiv-2605.11048/fig-2-architecture.png" alt="原文架构图：力历史与本体状态经编码后进入 AdaLN，双视角图像进入 cross-attention，DiT 联合输出运动和预测力。" loading="lazy">
+  <figcaption><strong>原文 Fig. 2 · 两种模态进入网络的方式不同。</strong> 力／本体条件调制动作特征，视觉提供可选择读取的上下文；执行接口按 §3.3 读取其中的运动分量。来源：<a href="https://arxiv.org/pdf/2605.11048v2#page=4">ForceFlow，arXiv:2605.11048v2，PDF p. 4</a>；版权归原权利人。</figcaption>
+</figure>
 
 力历史 $$F_t^{\mathrm{hist}}\in\mathbb R^{10\times6}$$ 被展平为 60 维，经两层 MLP 编码为 128 维。两帧本体状态分别编码为 64 维，再展平为 128 维；拼接得到 256 维 $$c_{\mathrm{vec}}$$。它通过 AdaLN 改变各层特征的尺度与偏移：
 
@@ -134,7 +137,10 @@ $$
 
 力偏差（Force Cost）比较的是**执行所得的力统计量与专家参考的绝对差**。短接触任务取单次执行的最大力幅值；持续接触任务仅在力幅值大于 5 N 的阶段取平均，再在 20 次试验上求平均绝对偏差。它不是网络预测 wrench 的误差，也不是全轨迹逐时刻跟踪误差。ForceFlow 将该平均成本从 ForceVLA 的 23.31 N 降至 8.23 N，约下降 64.7%。（Eq. 2；Table 2）
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2605.11048v2#page=9">查看原图</a> · <strong>原文 Fig. 6 · 单次执行中的预测与实测力。</strong> 两者随接触阶段共同变化，花瓶峰值等处仍可见偏差；此图与 Table 2 的执行力成本是不同评价。来源：arXiv:2605.11048v2，PDF p. 9。</p>
+<figure>
+  <img src="/img/arxiv-2605.11048/fig-6-force-prediction.png" alt="原文六个任务的单次轨迹：红色预测力和蓝色实测力在接触及卸载时段接近，阴影表示两条曲线的差异。" loading="lazy">
+  <figcaption><strong>原文 Fig. 6 · 单次执行中的预测与实测力。</strong> 两者随接触阶段共同变化，花瓶峰值等处仍可见偏差；此图与 Table 2 的执行力成本是不同评价。来源：<a href="https://arxiv.org/pdf/2605.11048v2#page=9">ForceFlow，arXiv:2605.11048v2，PDF p. 9</a>；版权归原权利人。</figcaption>
+</figure>
 
 ### 物理变化与空间变化
 

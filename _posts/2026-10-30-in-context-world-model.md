@@ -49,7 +49,10 @@ paper:
 
 ### 从原图看完整输入输出
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2606.26025v3#page=4">查看原图</a> · <strong>原文 Figure 2 · 上下文与控制共用一个模型。</strong> 左侧缓冲区保存动作及其前后图像；中间虚线框重复 N 次，成为前缀；右侧接入当前图像和语言任务，生成并解码动作。绿色为视觉表示，灰色为文本 token，黄色为动作 token。来源：In-Context World Modeling for Robotic Control，arXiv:2606.26025v3，PDF 第 4 页。</p>
+<figure>
+  <img src="/img/in-context-world-model/fig02-pipeline.png" alt="ICWM 原图：随机探测片段进入视觉编码器和动作分词器，与当前图像及任务指令一同输入 VLA，输出动作块" loading="lazy">
+  <figcaption><strong>原文 Figure 2 · 上下文与控制共用一个模型。</strong> 左侧缓冲区保存动作及其前后图像；中间虚线框重复 N 次，成为前缀；右侧接入当前图像和语言任务，生成并解码动作。绿色为视觉表示，灰色为文本 token，黄色为动作 token。来源：In-Context World Modeling for Robotic Control，arXiv:2606.26025v3，PDF 第 4 页。 <a href="https://arxiv.org/pdf/2606.26025v3#page=4">原文出处</a>。</figcaption>
+</figure>
 
 图 2 可以按“历史片段 → 当前问题 → 控制输出”阅读。历史写为
 
@@ -76,7 +79,10 @@ $$
 
 ### 部署时怎样采集、读取和复用历史
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2606.26025v3#page=22">查看原图</a> · <strong>原文 Figure 16 · 随机动作提供系统响应样本。</strong> 上排是真实场景，下排是仿真场景，每组展示起始帧 oˢ 与结束帧 oᵉ。上下文保留它们之间的动作标记，使模型将控制输入与视觉位移配对。来源：同文 v3，PDF 第 22 页。</p>
+<figure>
+  <img src="/img/in-context-world-model/fig16-probing-clips.png" alt="真实机器人和仿真中随机探测片段的起止帧，显示机械臂运动产生的视觉变化" loading="lazy">
+  <figcaption><strong>原文 Figure 16 · 随机动作提供系统响应样本。</strong> 上排是真实场景，下排是仿真场景，每组展示起始帧 oˢ 与结束帧 oᵉ。上下文保留它们之间的动作标记，使模型将控制输入与视觉位移配对。来源：同文 v3，PDF 第 22 页。 <a href="https://arxiv.org/pdf/2606.26025v3#page=22">原文出处</a>。</figcaption>
+</figure>
 
 部署前，机器人在可达工作空间中随机采样目标，向目标执行固定步长运动，记录起止图像和动作。附录 D.1 将探测实现具体化为固定步长策略：动作目的在于产生覆盖不同方向的响应片段，执行过程允许在到达随机目标前结束。实机工作空间由 UR5e 关节范围与正向运动学确定，探测避开任务物体，保留原有任务布局。（§4.2；附录 D.1）
 
@@ -101,7 +107,10 @@ LIBERO 包括 Spatial、Goal、Object、Long 四个任务套件。按附录 B.1 
 
 ### 主要结果：成功率与提升口径
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2606.26025v3#page=6">查看原图</a> · <strong>原文 Figure 4 · 已见与新视角的成功率。</strong> 纵轴为成功率（%），绿色为 ICWM。最右侧 +8.1% 与 +13.0% 表示相对 MV 的平均相对提升；对应新视角的原始成功率见下表。来源：同文 v3，PDF 第 6 页；数值核对 Table 3–4，第 17、19 页。</p>
+<figure>
+  <img src="/img/in-context-world-model/fig04-libero-results.png" alt="LIBERO 四个套件和平均成功率，比较已见及未见视角下的 ICWM、MV、EXP 和单视角微调基线" loading="lazy">
+  <figcaption><strong>原文 Figure 4 · 已见与新视角的成功率。</strong> 纵轴为成功率（%），绿色为 ICWM。最右侧 +8.1% 与 +13.0% 表示相对 MV 的平均相对提升；对应新视角的原始成功率见下表。来源：同文 v3，PDF 第 6 页；数值核对 Table 3–4，第 17、19 页。 <a href="https://arxiv.org/pdf/2606.26025v3#page=6">原文出处</a>。</figcaption>
+</figure>
 
 | LIBERO 新视角 | MV 成功率 | EXP 成功率 | ICWM 成功率 | ICWM − MV |
 | :--- | ---: | ---: | ---: | ---: |

@@ -49,7 +49,10 @@ DreamZero 把预训练视频模型转化为能够执行语言指令的机器人�
 
 模型以 Wan2.1-I2V-14B-480P 为初始化。视觉经 VAE 编码，语言和本体状态经各自编码器输入，动作通过新增的 action encoder 和 decoder 进入共享 DiT。多视角图像在视觉输入中拼接。未来视频与动作共同加噪、共同进行 flow matching；训练时，过去块提供干净的条件，当前块学习去噪。
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2602.15922v1#page=6">查看原图</a> · <strong>原文 Fig. 4 · 联合训练与真实观测闭环。</strong> 左侧使用干净历史进行 teacher forcing，右侧在每轮执行后更新实际视觉历史。 来源：DreamZero，arXiv v1，PDF 第 6 页。</p>
+<figure>
+  <img src="/img/dreamzero/architecture.png" alt="视频与动作共享DiT联合去噪，执行后真实观测写回KV缓存" loading="lazy">
+  <figcaption><strong>原文 Fig. 4 · 联合训练与真实观测闭环。</strong> 左侧使用干净历史进行 teacher forcing，右侧在每轮执行后更新实际视觉历史。 来源：DreamZero，arXiv v1，PDF 第 6 页。 <a href="https://arxiv.org/pdf/2602.15922v1#page=6">原文出处</a>。</figcaption>
+</figure>
 
 论文将联合分布写为视频预测与逆动力学的分解：
 
@@ -87,7 +90,10 @@ AgiBot 数据来自 22 个环境、7,193 个 episode，平均每条轨迹 4.4 �
 
 AgiBot 分别评价十项已见任务和十项未见任务，每项八次、分布在四台机器人上。DROID 分别评价二十项已见任务和二十项未见任务，每项两次。任务进度按完成步骤计分；完整成功率统计整项任务完成。场景和物体默认来自新测试环境。（§4.1、§4.2）
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2602.15922v1#page=14">查看原图</a> · <strong>原文 Fig. 9 · 未见任务上的进度与成功率。</strong> AgiBot 的 39.5% 为平均任务进度；右下角单列 DROID 的完整成功率。 来源：DreamZero，arXiv v1，PDF 第 14 页。</p>
+<figure>
+  <img src="/img/dreamzero/unseen-tasks.png" alt="AgiBot十项新任务的进度以及DROID平均进度和成功率对比" loading="lazy">
+  <figcaption><strong>原文 Fig. 9 · 未见任务上的进度与成功率。</strong> AgiBot 的 39.5% 为平均任务进度；右下角单列 DROID 的完整成功率。 来源：DreamZero，arXiv v1，PDF 第 14 页。 <a href="https://arxiv.org/pdf/2602.15922v1#page=14">原文出处</a>。</figcaption>
+</figure>
 
 | 实验问题 | 设置与指标 | 结果 | 原文位置 |
 | :--- | :--- | :--- | :--- |
@@ -99,7 +105,10 @@ AgiBot 分别评价十项已见任务和十项未见任务，每项八次、分�
 
 跨 embodiment 实验中，54.3% 相对 38.3% 增加 16.0 个百分点，对应约 42% 相对提升；YAM 视频对应增加 17.1 个百分点。新 YAM 适配则用约 30 分钟机器人数据后训练，并展示新物体与语言指令下的执行结果。
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2602.15922v1#page=16">查看原图</a> · <strong>原文 Fig. 12 · 新机器人上的少量数据适配。</strong> 模型通过约 30 分钟 YAM play 数据后训练获得新 embodiment 的执行能力。 来源：DreamZero，arXiv v1，PDF 第 16 页。</p>
+<figure>
+  <img src="/img/dreamzero/embodiment.png" alt="AgiBot预训练模型经30分钟YAM数据后训练后的物体操作案例" loading="lazy">
+  <figcaption><strong>原文 Fig. 12 · 新机器人上的少量数据适配。</strong> 模型通过约 30 分钟 YAM play 数据后训练获得新 embodiment 的执行能力。 来源：DreamZero，arXiv v1，PDF 第 16 页。 <a href="https://arxiv.org/pdf/2602.15922v1#page=16">原文出处</a>。</figcaption>
+</figure>
 
 ### 数据多样性与模型规模
 

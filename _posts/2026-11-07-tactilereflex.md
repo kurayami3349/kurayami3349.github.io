@@ -74,7 +74,10 @@ $$
 
 $$S_y$$ 是像素运动代理，不是牛顿单位的剪切力。中位数避免直接随接触像素数量增长；防滑通道用原始信号，释放与保护使用 EMA（$$\alpha=0.3$$）平滑信号，双指强度取最大值。CoP 只在双指均有有效接触时计算平均竖直位置。（Eqs. 1–6，Table I）
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2605.23568v4#page=3">查看原图</a> · <strong>原文 Fig. 1 · 双指视觉触觉与夹爪反射层。</strong> 高层提供臂轨迹，夹爪层读取三类代理并更新 effort 和位置；右侧展示硬件与接触图像。 来源：arXiv:2605.23568v4，PDF 第 3 页。</p>
+<figure>
+  <img src="/img/arxiv-2605.23568/fig-1-system.png" alt="双指视觉触觉与夹爪反射层；高层提供臂轨迹，夹爪层读取三类代理并更新 effort 和位置；右侧展示硬件与接触图像。" loading="lazy">
+  <figcaption><strong>原文 Fig. 1 · 双指视觉触觉与夹爪反射层。</strong> 高层提供臂轨迹，夹爪层读取三类代理并更新 effort 和位置；右侧展示硬件与接触图像。 来源：arXiv:2605.23568v4，PDF 第 3 页。 <a href="https://arxiv.org/pdf/2605.23568v4#page=3">原文出处</a>。</figcaption>
+</figure>
 
 ### 状态机与优先级
 
@@ -124,7 +127,10 @@ R2 与 R3 每周期互斥；R1 独立评估。规定保护的 effort 减量大�
 
 来源：Table V，p. 6。所有 20 次均无掉落，真正区分方法的是永久形变。A 的 effort 累积到上限；B 在加紧与保护之间大幅振荡；C 的残余剪切使释放条件难以满足；D 由保护先减轻载荷／剪切，为释放创造条件。作者报告 D 对合并 A/B/C 的 Fisher 检验 $$p<0.001$$。
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2605.23568v4#page=7">查看原图</a> · <strong>原文 Fig. 3 · 四种通道配置的时序行为。</strong> 仅防滑会积累 effort，加入保护仍可能振荡，只有完整组合兼顾防滑和释放；曲线为原文代表试验。 来源：arXiv:2605.23568v4，PDF 第 7 页。</p>
+<figure>
+  <img src="/img/arxiv-2605.23568/fig-3-ablation.png" alt="四种通道配置的时序行为；仅防滑会积累 effort，加入保护仍可能振荡，只有完整组合兼顾防滑和释放；曲线为原文代表试验。" loading="lazy">
+  <figcaption><strong>原文 Fig. 3 · 四种通道配置的时序行为。</strong> 仅防滑会积累 effort，加入保护仍可能振荡，只有完整组合兼顾防滑和释放；曲线为原文代表试验。 来源：arXiv:2605.23568v4，PDF 第 7 页。 <a href="https://arxiv.org/pdf/2605.23568v4#page=7">原文出处</a>。</figcaption>
+</figure>
 
 ### 动态倒水
 

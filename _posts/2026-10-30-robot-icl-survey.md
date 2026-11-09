@@ -61,7 +61,10 @@ $$
 
 ### 四类方法：上下文经过什么中间表示成为动作
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2609.36012v1#page=29">查看原图</a> · <strong>原文 Fig. 12 · 四种上下文到动作的路径。</strong> 上下文分别变成动作条件、接触参考、预测未来或技能序列，代表方法为原文 [14,38,24,30]。 来源：In-Context Learning for Robots，arXiv v1，PDF 第 29 页。</p>
+<figure>
+  <img src="/img/robot-icl-survey/fig12-interfaces.png" alt="条件策略、几何迁移、世界模型、技能执行四种接口" loading="lazy">
+  <figcaption><strong>原文 Fig. 12 · 四种上下文到动作的路径。</strong> 上下文分别变成动作条件、接触参考、预测未来或技能序列，代表方法为原文 [14,38,24,30]。 来源：In-Context Learning for Robots，arXiv v1，PDF 第 29 页。 <a href="https://arxiv.org/pdf/2609.36012v1#page=29">原文出处</a>。</figcaption>
+</figure>
 
 | 方法类别 | 从上下文提取的内容 | 执行路径 | 原文代表 |
 | :--- | :--- | :--- | :--- |
@@ -104,7 +107,10 @@ RoboTTT 的 DAgger Distillation 用完整执行记录作上下文，把人工纠
 
 ### 任务变化与物理变化
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2609.36012v1#page=56">查看原图</a> · <strong>原文 Fig. 20 · 任务关系与物理响应。</strong> 示范说明意图，交互揭示实现方式；这是综述组织研究问题的概念示意图。 来源：In-Context Learning for Robots，arXiv v1，PDF 第 56 页。</p>
+<figure>
+  <img src="/img/robot-icl-survey/fig20-task-physics.png" alt="任务要求和物理响应独立变化的四象限示意" loading="lazy">
+  <figcaption><strong>原文 Fig. 20 · 任务关系与物理响应。</strong> 示范说明意图，交互揭示实现方式；这是综述组织研究问题的概念示意图。 来源：In-Context Learning for Robots，arXiv v1，PDF 第 56 页。 <a href="https://arxiv.org/pdf/2609.36012v1#page=56">原文出处</a>。</figcaption>
+</figure>
 
 Fig. 20 把任务关系和物理响应作为可独立变化的两个维度：换装配顺序改变任务，换摩擦或负载改变响应，柔性物体与工具使用可以同时涉及二者。示范传达意图，交互揭示实现方式。身体与动力学适配章节以 RMA [39]、LocoFormer [40] 和 RopeFormer [364] 等工作，说明动作历史如何为当前身体、地面或物体响应提供信息。（§6.1、§6.4）
 
@@ -122,7 +128,10 @@ Fig. 20 把任务关系和物理响应作为可独立变化的两个维度：换
 | 几何迁移粒度 | Part-based transfer [347]；杯子放置到杯架 | 整体形变到部件形变：11/27→23/27 | Table 16 |
 | 保留经验的贡献 | Zeva [88]；5 个真机任务 | 持久记忆带来 10–20 个百分点成功率提升 | Table 16 |
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2609.36012v1#page=43">查看原图</a> · <strong>原文 Fig. 15 · 训练多样性与提示方式。</strong> 左侧保持示范总量，右侧比较数据规模与提示方式；S1 曲线采用包含人工恢复的累计逐步骤指标。 来源：In-Context Learning for Robots，arXiv v1，PDF 第 43 页。</p>
+<figure>
+  <img src="/img/robot-icl-survey/fig15-training.png" alt="BPP任务数和S1不同提示方式下的扩展曲线" loading="lazy">
+  <figcaption><strong>原文 Fig. 15 · 训练多样性与提示方式。</strong> 左侧保持示范总量，右侧比较数据规模与提示方式；S1 曲线采用包含人工恢复的累计逐步骤指标。 来源：In-Context Learning for Robots，arXiv v1，PDF 第 43 页。 <a href="https://arxiv.org/pdf/2609.36012v1#page=43">原文出处</a>。</figcaption>
+</figure>
 
 BPP 的比较保持示范总数为 10,000，让每任务示范数从 20 变为 10 和 5，因而刻画的是任务分配的作用。S1 [99] 的比较则随预训练规模从 1k 增至 100k 小时，在未见任务上示范提示从 1% 升至 66%，语言提示从 0% 升至 9%；这里采用包含人工恢复介入的累计逐步骤成功指标。两组证据分别涉及固定预算下的任务多样性，以及数据扩展与提示方式的共同变化。（§4.2，p43）
 

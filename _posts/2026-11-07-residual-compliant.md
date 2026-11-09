@@ -69,7 +69,10 @@ $$
 
 操作者使用 Haption Virtuose 6D Tao 控制 Franka FR3。数字孪生采用物理预测与 FoundationPose 视觉校正：前者在遮挡时继续传播状态，后者根据 RGB-D 与物体网格修正误差，初始化还使用 SAM3。显示参考位置与实际位置之差，使操作者可以看见“弹簧压了多少”。孪生约 30 Hz，论文给出的预测／校正／I/O 耗时为 15／10／5 ms。（§III-B）
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2610.14035v1#page=3">查看原图</a> · <strong>原文 Fig. 2 · 完整训练与执行流程。</strong> 基础策略输出参考位姿及刚度模式，残差策略增加位置偏移，测得的外力进入导纳控制。 来源：arXiv:2610.14035v1，PDF 第 3 页。</p>
+<figure>
+<img src="/img/arxiv-2610.14035/fig-2-pipeline.png" alt="完整训练与执行流程">
+<figcaption><strong>原文 Fig. 2 · 完整训练与执行流程。</strong> 基础策略输出参考位姿及刚度模式，残差策略增加位置偏移，测得的外力进入导纳控制。 来源：arXiv:2610.14035v1，PDF 第 3 页。 <a href="https://arxiv.org/pdf/2610.14035v1#page=3">原文出处</a>。</figcaption>
+</figure>
 
 ### 从轨迹增广到基础策略
 
@@ -114,7 +117,10 @@ Franka FR3 搭配 Resense HEX21 F/T 与 RealSense D435。三任务为 Flip Box�
 
 常规测试中 Base 与 ACP-style 均为 89/90，Residual 为 90/90。最明显的数据增广差异出现在 Push and Flip Box：LE 为 11/30，ACP、Base、Residual 均为 30/30。相比 Base，Residual 在困难测试增加 5 次成功，即 12.5 个百分点。（§IV-B、Fig. 5）
 
-<p class="paper-sidenote"><a href="https://arxiv.org/pdf/2610.14035v1#page=7">查看原图</a> · <strong>原文 Fig. 6 · 完成时间与峰值力。</strong> 图中比较 LE、ACP-style、Base 与 Residual，保留原箱线分布及坐标单位。 来源：arXiv:2610.14035v1，PDF 第 7 页。</p>
+<figure>
+<img src="/img/arxiv-2610.14035/fig-6-time-force.png" alt="完成时间与峰值力">
+<figcaption><strong>原文 Fig. 6 · 完成时间与峰值力。</strong> 图中比较 LE、ACP-style、Base 与 Residual，保留原箱线分布及坐标单位。 来源：arXiv:2610.14035v1，PDF 第 7 页。 <a href="https://arxiv.org/pdf/2610.14035v1#page=7">原文出处</a>。</figcaption>
+</figure>
 
 论文报告残差使各任务完成时间减少 7–18%；Flip Cube 峰值力从 Base 的约 10.0 N 降至 8.5 N。图中同时展示分布，说明成功率收益没有伴随更高峰值力。（Fig. 6，§IV-B）
 
